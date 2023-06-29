@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS users(
+  id TEXT PRIMARY KEY,
+  invitation_id TEXT NOT NULL REFERENCES invitations(id),
+  wa_number TEXT NOT NULL UNIQUE,
+  name TEXT,
+  status TEXT NOT NULL,
+  qr_image TEXT,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE
+);

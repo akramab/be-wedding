@@ -1,0 +1,40 @@
+[api]
+host = "localhost"
+rest_port = 80
+
+[app_info]
+name = "go-template"
+env = "local"
+
+[postgres]
+host = "db"
+port = 5432
+database = "be-wedding"
+username = "be-wedding"
+password = "be-wedding"
+ssl_mode = "disable"
+migration = true
+log_level= "debug"
+conn_max_open = 5
+conn_max_idle = 5
+logging = true
+tracing = true
+
+[logger]
+level = "debug"
+output = "console"
+
+[jwt]
+secret = "secret"
+exp_time = 30 #in minutes
+
+[oauth]
+client_id = "1086765098012-hd47p3sfjpqq73oecvsvv52fqijs1o6p.apps.googleusercontent.com"
+client_secret = "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"
+redirect_uri = "http://localhost:3000/auth/google/callback"
+
+[dev]
+auth = false
+
+[whatsapp]
+enable_notification = false

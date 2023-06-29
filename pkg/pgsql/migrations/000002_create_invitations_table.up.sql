@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS invitations(
+  id TEXT PRIMARY KEY,
+  session_id TEXT NOT NULL REFERENCES invitation_sessions(id),
+  type TEXT NOT NULL,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE
+);
