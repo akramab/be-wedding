@@ -1,15 +1,15 @@
 services:
-  go-web-app:
-    image: cosmtrek/air
-    working_dir: /src
-    ports:
-      - "80:80"
-    volumes:
-      - ./:/src/
-      - ./cmd/rest/main.go:/src/main.go
-    restart: always
-    depends_on:
-      - db
+  # go-web-app:
+  #   image: cosmtrek/air
+  #   working_dir: /src
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./:/src/
+  #     - ./cmd/rest/main.go:/src/main.go
+  #   restart: always
+  #   depends_on:
+  #     - db
   db:
     image: postgres:14.1-alpine
     restart: always
