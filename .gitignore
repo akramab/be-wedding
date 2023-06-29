@@ -1,0 +1,11 @@
+build/
+vendor/
+tmp/
+#static/
+.vscode/
+.idea/
+.scannerwork/
+coverage.*
+.DS_Store
+/main.go
+/whatsappcred.db
