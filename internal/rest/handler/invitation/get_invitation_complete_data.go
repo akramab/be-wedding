@@ -45,6 +45,11 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 		return
 	}
 
+	var qrImageLink string
+	if invitationCompleteData.User.QRImage != "" {
+		// still in hard-code
+		qrImageLink = fmt.Sprintf("https://api.kramili.site/static/%s", invitationCompleteData.User.QRImage)
+	}
 	resp := GetInvitationCompleteDataResponse{
 		Invitation: InvidationData{
 			ID:       invitationCompleteData.Invitation.ID,
@@ -58,7 +63,7 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 			Name:           invitationCompleteData.User.Name,
 			WhatsAppNumber: invitationCompleteData.User.WhatsAppNumber,
 			Status:         invitationCompleteData.User.Status,
-			QRImageLink:    fmt.Sprintf("http://localhost/static/%s", invitationCompleteData.User.QRImage),
+			QRImageLink:    qrImageLink,
 			PeopleCount:    invitationCompleteData.User.PeopleCount,
 		},
 	}

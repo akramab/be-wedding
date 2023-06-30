@@ -6,6 +6,7 @@ import (
 
 	"be-wedding/internal/config"
 	"be-wedding/internal/store"
+	"be-wedding/pkg/whatsapp"
 )
 
 type UserHandler interface {
@@ -26,13 +27,15 @@ type userHandler struct {
 	db              *sql.DB
 	userStore       store.User
 	invitationStore store.Invitation
+	waClient        whatsapp.Client
 }
 
-func NewUserHandler(apiCfg config.API, db *sql.DB, userStore store.User, invitationStore store.Invitation) UserHandler {
+func NewUserHandler(apiCfg config.API, db *sql.DB, userStore store.User, invitationStore store.Invitation, waClient whatsapp.Client) UserHandler {
 	return &userHandler{
 		apiCfg:          apiCfg,
 		db:              db,
 		userStore:       userStore,
 		invitationStore: invitationStore,
+		waClient: waClient,
 	}
 }

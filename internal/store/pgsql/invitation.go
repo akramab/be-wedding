@@ -114,3 +114,33 @@ func (s *Invitation) FindOneCompleteDataByID(ctx context.Context, id string) (*s
 
 	return invitation, nil
 }
+
+const invitationFindOneCompleteDataByUserIDQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0)
+		FROM invitations i
+		LEFT JOIN invitation_sessions invs
+		ON i.session_id = invs.id
+		LEFT JOIN users u
+		ON i.id = u.invitation_id
+		LEFT JOIN user_rsvps ursvp
+		ON u.id = ursvp.user_id
+		WHERE u.id = $1
+		LIMIT 1
+	`
+
+func (s *Invitation) FindOneCompleteDataByUserID(ctx context.Context, id string) (*store.InvitationCompleteData, error) {
+	invitation := &store.InvitationCompleteData{}
+
+	row := s.db.QueryRowContext(ctx, invitationFindOneCompleteDataByUserIDQuery, id)
+
+	err := row.Scan(
+		&invitation.Invitation.ID, &invitation.Invitation.Type,
+		&invitation.Invitation.Name, &invitation.Invitation.Status, &invitation.Invitation.Schedule,
+		&invitation.User.ID, &invitation.User.Name, &invitation.User.WhatsAppNumber, &invitation.User.Status,
+		&invitation.User.QRImage, &invitation.User.PeopleCount,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return invitation, nil
+}

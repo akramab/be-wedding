@@ -39,7 +39,7 @@ func New(
 	userStore := storepgsql.NewUser(sqlDB)
 
 	invitationHandler := invitationhandler.NewInvitationHandler(cfg.API, sqlDB, invitationStore)
-	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore)
+	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient)
 
 	r.Route("/invitations", func(r chi.Router) {
 		r.Get("/{id}", invitationHandler.GetInvitationCompleteData)

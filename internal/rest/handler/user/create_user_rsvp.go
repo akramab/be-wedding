@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,6 +12,8 @@ import (
 	"be-wedding/internal/rest/response"
 
 	"github.com/go-chi/chi/v5"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 type CreateUserRSVPRequest struct {
@@ -42,6 +45,38 @@ func (handler *userHandler) CreateUserRSVP(w http.ResponseWriter, r *http.Reques
 	if err := handler.userStore.InsertUserRSVP(ctx, userRSVP); err != nil {
 		log.Println("error insert new user rsvp data: %w", err)
 		response.Error(w, apierror.InternalServerError())
+		return
+	}
+
+	invitationCompleteData, err := handler.invitationStore.FindOneCompleteDataByUserID(ctx, userID)
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.NotFoundError("User id not found"))
+		return
+	}
+
+	userRSVPMessage := proto.String(fmt.Sprintf(`Terima kasih telah mengisi RSVP. 
+
+Berikut ini rekap rencana kehadiran anda:
+
+*Nama*			: %s
+*Jumlah Orang*	: %d
+
+Berikut ini kami lampirkan pula code QR sebagai tiket masuk anda.`, invitationCompleteData.User.Name, userRSVP.PeopleCount))
+	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
+		Conversation: userRSVPMessage,
+	})
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.BadRequestError(err.Error()))
+		return
+	}
+
+	captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
+	err = handler.waClient.SendImageMessage(ctx, invitationCompleteData.User.WhatsAppNumber, invitationCompleteData.User.QRImage, captionImageMessage)
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.BadRequestError(err.Error()))
 		return
 	}
 

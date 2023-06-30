@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.mau.fi/whatsmeow"
@@ -11,6 +12,7 @@ import (
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 type Config struct {
@@ -19,6 +21,7 @@ type Config struct {
 
 type Client interface {
 	SendMessage(ctx context.Context, recipientNumber string, message *waProto.Message) error
+	SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error
 }
 
 func NewWhatsMeowClient(waCfg Config) (Client, error) {
@@ -76,63 +79,66 @@ func (mock *waClientMock) SendMessage(ctx context.Context, recipientNumber strin
 	return nil
 }
 
+func (mock *waClientMock) SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error {
+	return nil
+}
+
 type whatsMeow struct {
 	Client *whatsmeow.Client
 }
 
 func (wm *whatsMeow) SendMessage(ctx context.Context, recipientNumber string, message *waProto.Message) error {
-	const initialMessage = `*[OTOMATISASI PENILAIAN SPBE]*
-` + "```" + `Terima kasih telah menggunakan Aplikasi Otomatisasi Penilaian SPBE. Hasil penilaian anda akan keluar dalam beberapa saat lagi.` + "```"
-	// initialTemplateMessage := &waProto.Message{
-	// 	TemplateMessage: &waProto.TemplateMessage{
-	// 		HydratedTemplate: &waProto.TemplateMessage_HydratedFourRowTemplate{
-	// 			Title: &waProto.TemplateMessage_HydratedFourRowTemplate_HydratedTitleText{
-	// 				HydratedTitleText: "The Title",
-	// 			},
-	// 			TemplateId:          proto.String("template-id"),
-	// 			HydratedContentText: proto.String("The Content"),
-	// 			HydratedFooterText:  proto.String("The Footer"),
-	// 			HydratedButtons: []*waProto.HydratedTemplateButton{
 
-	// 				// This for URL button
-	// 				{
-	// 					Index: proto.Uint32(1),
-	// 					HydratedButton: &waProto.HydratedTemplateButton_UrlButton{
-	// 						UrlButton: &waProto.HydratedTemplateButton_HydratedURLButton{
-	// 							DisplayText: proto.String("The Link"),
-	// 							Url:         proto.String("https://fb.me/this"),
-	// 						},
-	// 					},
-	// 				},
+	// Remove '+' sign from the target recipient number
+	recipientNumberCleaned := recipientNumber[1:]
 
-	// 				// This for call button
-	// 				{
-	// 					Index: proto.Uint32(2),
-	// 					HydratedButton: &waProto.HydratedTemplateButton_CallButton{
-	// 						CallButton: &waProto.HydratedTemplateButton_HydratedCallButton{
-	// 							DisplayText: proto.String("Call us"),
-	// 							PhoneNumber: proto.String("1234567890"),
-	// 						},
-	// 					},
-	// 				},
-
-	// 				// This is just a quick reply
-	// 				{
-	// 					Index: proto.Uint32(3),
-	// 					HydratedButton: &waProto.HydratedTemplateButton_QuickReplyButton{
-	// 						QuickReplyButton: &waProto.HydratedTemplateButton_HydratedQuickReplyButton{
-	// 							DisplayText: proto.String("Quick reply"),
-	// 							Id:          proto.String("quick-id"),
-	// 						},
-	// 					},
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-
-	recipient := types.NewJID(recipientNumber, "s.whatsapp.net")
+	recipient := types.NewJID(recipientNumberCleaned, "s.whatsapp.net")
 	_, err := wm.Client.SendMessage(context.Background(), recipient, message)
+
+	return err
+}
+
+func (wm *whatsMeow) SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error {
+	imageBytes, err := os.ReadFile(fmt.Sprintf("./static/qr-codes/%s", imageFileName)) // still need to change the mimetype
+	if err != nil {
+		fmt.Println("ERROR read image file")
+		fmt.Println(err.Error())
+		return err
+	}
+
+	resp, err := wm.Client.Upload(context.Background(), imageBytes, whatsmeow.MediaImage)
+	if err != nil {
+		fmt.Println("ERROR UPLOAD IMAGE")
+		return err
+	}
+
+	imageMsg := &waProto.ImageMessage{
+		Caption:  proto.String(captionImageMessage),
+		Mimetype: proto.String("image/png"), // replace this with the actual mime type
+		// you can also optionally add other fields like ContextInfo and JpegThumbnail here
+
+		Url:           &resp.URL,
+		DirectPath:    &resp.DirectPath,
+		MediaKey:      resp.MediaKey,
+		FileEncSha256: resp.FileEncSHA256,
+		FileSha256:    resp.FileSHA256,
+		FileLength:    &resp.FileLength,
+	}
+
+	// Remove '+' sign from the target recipient number
+	recipientNumberCleaned := recipientNumber[1:]
+
+	recipient := types.NewJID(recipientNumberCleaned, "s.whatsapp.net")
+
+	_, err = wm.Client.SendMessage(context.Background(), recipient, &waProto.Message{
+		ImageMessage: imageMsg,
+	})
+
+	if err != nil {
+		fmt.Println("SEND IMAGE ERROR")
+		fmt.Println(err.Error())
+		return err
+	}
 
 	return err
 }

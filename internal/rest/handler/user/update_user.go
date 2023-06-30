@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -11,6 +12,8 @@ import (
 	"be-wedding/internal/rest/response"
 
 	"github.com/go-chi/chi/v5"
+	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 type UpdateUserRequest struct {
@@ -42,6 +45,25 @@ func (handler *userHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err := handler.userStore.Update(ctx, userData); err != nil {
 		log.Println("error update new user data: %w", err)
 		response.Error(w, apierror.InternalServerError())
+		return
+	}
+
+	invitationCompleteData, err := handler.invitationStore.FindOneCompleteDataByUserID(ctx, userID)
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.NotFoundError("User id not found"))
+		return
+	}
+
+	userCompletedDataMessage := proto.String(fmt.Sprintf(`Terima kasih %s. 
+		
+Sampai berjumpa di hari-H Resepsi.`, userData.Name))
+	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
+		Conversation: userCompletedDataMessage,
+	})
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.BadRequestError(err.Error()))
 		return
 	}
 

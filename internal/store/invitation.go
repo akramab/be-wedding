@@ -47,4 +47,5 @@ type Invitation interface {
 	Insert(ctx context.Context, invitation *InvitationData) error
 	FindOneByID(ctx context.Context, id string) (*InvitationData, error)
 	FindOneCompleteDataByID(ctx context.Context, id string) (*InvitationCompleteData, error)
+	FindOneCompleteDataByUserID(ctx context.Context, userID string) (*InvitationCompleteData, error)
 }
