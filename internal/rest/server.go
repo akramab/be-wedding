@@ -48,6 +48,7 @@ func New(
 
 	r.Route("/invitations", func(r chi.Router) {
 		r.Get("/{id}", invitationHandler.GetInvitationCompleteData)
+		r.Get("/group/{waNumber}", invitationHandler.GetInvitationCompleteDataByWANumber)
 		r.Post("/", invitationHandler.CreateInvitation)
 	})
 

@@ -11,6 +11,7 @@ import (
 type InvitationHandler interface {
 	CreateInvitation(w http.ResponseWriter, r *http.Request)
 	GetInvitationCompleteData(w http.ResponseWriter, r *http.Request)
+	GetInvitationCompleteDataByWANumber(w http.ResponseWriter, r *http.Request)
 }
 
 type invitationHandler struct {

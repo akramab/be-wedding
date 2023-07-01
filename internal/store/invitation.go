@@ -48,4 +48,5 @@ type Invitation interface {
 	FindOneByID(ctx context.Context, id string) (*InvitationData, error)
 	FindOneCompleteDataByID(ctx context.Context, id string) (*InvitationCompleteData, error)
 	FindOneCompleteDataByUserID(ctx context.Context, userID string) (*InvitationCompleteData, error)
+	FindOneCompleteDataByWANumber(ctx context.Context, waNumber string) (*InvitationCompleteData, error)
 }
