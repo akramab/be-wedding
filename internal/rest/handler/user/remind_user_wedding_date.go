@@ -27,6 +27,12 @@ func (handler *userHandler) RemindUserWeddingDate(w http.ResponseWriter, r *http
 		return
 	}
 
+	err = handler.invitationStore.UpdateDateReminder(ctx, invitationCompleteData)
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.InternalServerError())
+	}
+
 	reminderMessage := proto.String(`Terima kasih telah meluangkan waktu. 
 		
 Kami akan mengirimkan reminder pada H-7 dan H-1 acara resepsi ☺️`)

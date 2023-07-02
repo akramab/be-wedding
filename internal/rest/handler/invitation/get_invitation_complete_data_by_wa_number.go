@@ -28,6 +28,24 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 		// still in hard-code
 		qrImageLink = fmt.Sprintf("https://api.kramili.site/static/%s", invitationCompleteData.User.QRImage)
 	}
+
+	var (
+		videoReminder int64
+		dateReminder int64
+	)
+
+	if invitationCompleteData.User.IsDateReminderSent {
+		dateReminder = 2
+	} else if invitationCompleteData.User.Name != "" {
+		dateReminder = 1
+	}
+
+	if invitationCompleteData.User.IsVideoReminderSent {
+		videoReminder = 2
+	} else if invitationCompleteData.User.Name != ""{
+		videoReminder = 1
+	}
+
 	resp := GetInvitationCompleteDataResponse{
 		Invitation: InvidationData{
 			ID:       invitationCompleteData.Invitation.ID,
@@ -37,12 +55,14 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 			Schedule: invitationCompleteData.Invitation.Schedule,
 		},
 		User: UserData{
-			ID:             invitationCompleteData.User.ID,
-			Name:           invitationCompleteData.User.Name,
-			WhatsAppNumber: invitationCompleteData.User.WhatsAppNumber,
-			Status:         invitationCompleteData.User.Status,
-			QRImageLink:    qrImageLink,
-			PeopleCount:    invitationCompleteData.User.PeopleCount,
+			ID:                  invitationCompleteData.User.ID,
+			Name:                invitationCompleteData.User.Name,
+			WhatsAppNumber:      invitationCompleteData.User.WhatsAppNumber,
+			Status:              invitationCompleteData.User.Status,
+			QRImageLink:         qrImageLink,
+			PeopleCount:         invitationCompleteData.User.PeopleCount,
+			IsDateReminderSent:  dateReminder,
+			IsVideoReminderSent: videoReminder,
 		},
 	}
 

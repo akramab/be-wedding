@@ -27,6 +27,12 @@ func (handler *userHandler) RemindUserSendWeddingVideo(w http.ResponseWriter, r 
 		return
 	}
 
+	err = handler.invitationStore.UpdateVideoReminder(ctx, invitationCompleteData)
+	if err != nil {
+		log.Println(err)
+		response.Error(w, apierror.InternalServerError())
+	}
+
 	reminderMessage := proto.String(`Terima kasih telah berkenan untuk mengirim video. 
 		
 Ketentuan Video:

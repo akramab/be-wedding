@@ -21,12 +21,14 @@ type InvidationData struct {
 }
 
 type UserData struct {
-	ID             string `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	WhatsAppNumber string `json:"wa_number,omitempty"`
-	Status         string `json:"status,omitempty"`
-	QRImageLink    string `json:"qr_image_link,omitempty"`
-	PeopleCount    int64  `json:"people_count,omitempty"`
+	ID                  string `json:"id,omitempty"`
+	Name                string `json:"name,omitempty"`
+	WhatsAppNumber      string `json:"wa_number,omitempty"`
+	Status              string `json:"status,omitempty"`
+	QRImageLink         string `json:"qr_image_link,omitempty"`
+	PeopleCount         int64  `json:"people_count,omitempty"`
+	IsDateReminderSent  int64  `json:"is_date_reminder_sent,omitempty"`
+	IsVideoReminderSent int64  `json:"is_video_reminder_sent,omitempty"`
 }
 
 type GetInvitationCompleteDataResponse struct {
@@ -50,6 +52,24 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 		// still in hard-code
 		qrImageLink = fmt.Sprintf("https://api.kramili.site/static/%s", invitationCompleteData.User.QRImage)
 	}
+
+	var (
+		videoReminder int64
+		dateReminder  int64
+	)
+
+	if invitationCompleteData.User.IsDateReminderSent {
+		dateReminder = 2
+	} else if invitationCompleteData.User.Name != "" {
+		dateReminder = 1
+	}
+
+	if invitationCompleteData.User.IsVideoReminderSent {
+		videoReminder = 2
+	} else if invitationCompleteData.User.Name != "" {
+		videoReminder = 1
+	}
+
 	resp := GetInvitationCompleteDataResponse{
 		Invitation: InvidationData{
 			ID:       invitationCompleteData.Invitation.ID,
@@ -59,12 +79,14 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 			Schedule: invitationCompleteData.Invitation.Schedule,
 		},
 		User: UserData{
-			ID:             invitationCompleteData.User.ID,
-			Name:           invitationCompleteData.User.Name,
-			WhatsAppNumber: invitationCompleteData.User.WhatsAppNumber,
-			Status:         invitationCompleteData.User.Status,
-			QRImageLink:    qrImageLink,
-			PeopleCount:    invitationCompleteData.User.PeopleCount,
+			ID:                  invitationCompleteData.User.ID,
+			Name:                invitationCompleteData.User.Name,
+			WhatsAppNumber:      invitationCompleteData.User.WhatsAppNumber,
+			Status:              invitationCompleteData.User.Status,
+			QRImageLink:         qrImageLink,
+			PeopleCount:         invitationCompleteData.User.PeopleCount,
+			IsDateReminderSent:  dateReminder,
+			IsVideoReminderSent: videoReminder,
 		},
 	}
 

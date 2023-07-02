@@ -30,12 +30,14 @@ type InvitationData struct {
 }
 
 type InvitationUserData struct {
-	ID             string
-	Name           string
-	WhatsAppNumber string
-	PeopleCount    int64
-	Status         string
-	QRImage        string
+	ID                  string
+	Name                string
+	WhatsAppNumber      string
+	PeopleCount         int64
+	Status              string
+	QRImage             string
+	IsVideoReminderSent bool
+	IsDateReminderSent  bool
 }
 
 type InvitationCompleteData struct {
@@ -49,4 +51,6 @@ type Invitation interface {
 	FindOneCompleteDataByID(ctx context.Context, id string) (*InvitationCompleteData, error)
 	FindOneCompleteDataByUserID(ctx context.Context, userID string) (*InvitationCompleteData, error)
 	FindOneCompleteDataByWANumber(ctx context.Context, waNumber string) (*InvitationCompleteData, error)
+	UpdateDateReminder(ctx context.Context, invitationCompleteData *InvitationCompleteData) error
+	UpdateVideoReminder(ctx context.Context, invitationCompleteData *InvitationCompleteData) error
 }
