@@ -48,6 +48,7 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 	}
 
 	resp := GetInvitationCompleteDataResponse{
+		Message: "success",
 		Invitation: InvidationData{
 			ID:       invitationCompleteData.Invitation.ID,
 			Name:     invitationCompleteData.Invitation.Name,

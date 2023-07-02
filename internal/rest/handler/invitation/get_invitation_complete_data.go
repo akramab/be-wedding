@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"be-wedding/internal/rest/response"
+	"be-wedding/internal/store"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -72,6 +73,21 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 		videoReminder = 1
 	}
 
+	userData := UserData{
+		ID:                  invitationCompleteData.User.ID,
+		Name:                invitationCompleteData.User.Name,
+		WhatsAppNumber:      invitationCompleteData.User.WhatsAppNumber,
+		Status:              invitationCompleteData.User.Status,
+		QRImageLink:         qrImageLink,
+		PeopleCount:         invitationCompleteData.User.PeopleCount,
+		IsDateReminderSent:  dateReminder,
+		IsVideoReminderSent: videoReminder,
+	}
+
+	if invitationCompleteData.Invitation.Type == store.InvitationTypeGroup {
+		userData = UserData{}
+	}
+
 	resp := GetInvitationCompleteDataResponse{
 		Message: "success",
 		Invitation: InvidationData{
@@ -81,16 +97,7 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 			Status:   invitationCompleteData.Invitation.Status,
 			Schedule: invitationCompleteData.Invitation.Schedule,
 		},
-		User: UserData{
-			ID:                  invitationCompleteData.User.ID,
-			Name:                invitationCompleteData.User.Name,
-			WhatsAppNumber:      invitationCompleteData.User.WhatsAppNumber,
-			Status:              invitationCompleteData.User.Status,
-			QRImageLink:         qrImageLink,
-			PeopleCount:         invitationCompleteData.User.PeopleCount,
-			IsDateReminderSent:  dateReminder,
-			IsVideoReminderSent: videoReminder,
-		},
+		User: userData,
 	}
 
 	response.Respond(w, http.StatusOK, resp)
