@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	apierror "be-wedding/internal/rest/error"
-
 	"be-wedding/internal/rest/response"
 
 	"github.com/go-chi/chi/v5"
@@ -19,7 +17,10 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 	invitationCompleteData, err := handler.invitationStore.FindOneCompleteDataByWANumber(ctx, waNumber)
 	if err != nil {
 		log.Println(err)
-		response.Error(w, apierror.NotFoundError("wa number not found"))
+		resp := GetInvitationCompleteDataResponse{
+			Message: "fail",
+		}
+		response.Respond(w, http.StatusOK, resp)
 		return
 	}
 
@@ -31,7 +32,7 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 
 	var (
 		videoReminder int64
-		dateReminder int64
+		dateReminder  int64
 	)
 
 	if invitationCompleteData.User.IsDateReminderSent {
@@ -42,7 +43,7 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 
 	if invitationCompleteData.User.IsVideoReminderSent {
 		videoReminder = 2
-	} else if invitationCompleteData.User.Name != ""{
+	} else if invitationCompleteData.User.Name != "" {
 		videoReminder = 1
 	}
 

@@ -5,8 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	apierror "be-wedding/internal/rest/error"
-
 	"be-wedding/internal/rest/response"
 
 	"github.com/go-chi/chi/v5"
@@ -32,6 +30,7 @@ type UserData struct {
 }
 
 type GetInvitationCompleteDataResponse struct {
+	Message    string         `json:"message"`
 	Invitation InvidationData `json:"invitation"`
 	User       UserData       `json:"user,omitempty"`
 }
@@ -43,7 +42,10 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 	invitationCompleteData, err := handler.invitationStore.FindOneCompleteDataByID(ctx, invitationID)
 	if err != nil {
 		log.Println(err)
-		response.Error(w, apierror.NotFoundError("Invitation id not found"))
+		resp := GetInvitationCompleteDataResponse{
+			Message: "fail",
+		}
+		response.Respond(w, http.StatusOK, resp)
 		return
 	}
 
@@ -71,6 +73,7 @@ func (handler *invitationHandler) GetInvitationCompleteData(w http.ResponseWrite
 	}
 
 	resp := GetInvitationCompleteDataResponse{
+		Message: "success",
 		Invitation: InvidationData{
 			ID:       invitationCompleteData.Invitation.ID,
 			Name:     invitationCompleteData.Invitation.Name,
