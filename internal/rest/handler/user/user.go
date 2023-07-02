@@ -20,6 +20,7 @@ type UserHandler interface {
 	CreateUserRSVP(w http.ResponseWriter, r *http.Request)
 	RemindUserWeddingDate(w http.ResponseWriter, r *http.Request)
 	RemindUserSendWeddingVideo(w http.ResponseWriter, r *http.Request)
+	DownloadQRCode(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler struct {

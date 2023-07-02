@@ -63,6 +63,7 @@ func New(
 		r.Post("/{id}/rsvp", userHandler.CreateUserRSVP)
 		r.Post("/{id}/reminder/date", userHandler.RemindUserWeddingDate)
 		r.Post("/{id}/reminder/video", userHandler.RemindUserSendWeddingVideo)
+		r.Get("/{id}/qr-code/download", userHandler.DownloadQRCode)
 	})
 
 	r.Route("/auth", func(r chi.Router) {
