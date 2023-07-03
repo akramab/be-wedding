@@ -11,6 +11,9 @@ github.com/dchest/uniuri
 # github.com/felixge/httpsnoop v1.0.3
 ## explicit; go 1.13
 github.com/felixge/httpsnoop
+# github.com/fogleman/gg v1.3.0
+## explicit
+github.com/fogleman/gg
 # github.com/go-chi/chi/v5 v5.0.8
 ## explicit; go 1.14
 github.com/go-chi/chi/v5
@@ -37,6 +40,10 @@ github.com/golang-migrate/migrate/v4/internal/url
 github.com/golang-migrate/migrate/v4/source
 github.com/golang-migrate/migrate/v4/source/file
 github.com/golang-migrate/migrate/v4/source/iofs
+# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+## explicit
+github.com/golang/freetype/raster
+github.com/golang/freetype/truetype
 # github.com/golang/protobuf v1.5.3
 ## explicit; go 1.9
 github.com/golang/protobuf/jsonpb
@@ -238,6 +245,13 @@ golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/pbkdf2
+# golang.org/x/image v0.0.0-20190802002840-cff245a6509b
+## explicit; go 1.12
+golang.org/x/image/draw
+golang.org/x/image/font
+golang.org/x/image/font/basicfont
+golang.org/x/image/math/f64
+golang.org/x/image/math/fixed
 # golang.org/x/net v0.10.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts

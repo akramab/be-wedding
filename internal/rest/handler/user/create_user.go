@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"log"
 	"net/http"
 
@@ -16,8 +15,6 @@ import (
 	"github.com/google/uuid"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"google.golang.org/protobuf/proto"
-
-	qrcode "github.com/skip2/go-qrcode"
 )
 
 type CreateNewUserRequest struct {
@@ -64,13 +61,6 @@ func (handler *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err := handler.userStore.Insert(ctx, newUserData); err != nil {
 		log.Println("error insert new user data: %w", err)
 		response.Error(w, apierror.BadRequestError(fmt.Sprintf("phone number: %s already exists!", newUserData.WhatsAppNumber)))
-		return
-	}
-
-	err = qrcode.WriteColorFile(newUserData.ID, qrcode.Medium, 256, color.White, color.RGBA{110, 81, 59, 255}, fmt.Sprintf("./static/qr-codes/%s", qrImageName))
-	if err != nil {
-		log.Println(err.Error())
-		response.Error(w, apierror.BadRequestError(err.Error()))
 		return
 	}
 
