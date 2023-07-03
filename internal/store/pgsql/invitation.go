@@ -8,7 +8,7 @@ import (
 
 	"be-wedding/internal/store"
 
-	"github.com/google/uuid"
+	"github.com/dchest/uniuri"
 )
 
 type Invitation struct {
@@ -45,7 +45,7 @@ func (s *Invitation) Insert(ctx context.Context, invitation *store.InvitationDat
 		sessionID = store.InvitationSession2ID
 
 	}
-	invitationID := uuid.NewString()
+	invitationID := uniuri.NewLen(6)
 	createdAt := time.Now().UTC()
 
 	invitationStatus := store.InvitationStatusAvailable
