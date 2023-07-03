@@ -12,6 +12,7 @@ import (
 
 func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	invitationId := chi.URLParam(r, "id")
 	waNumber := chi.URLParam(r, "waNumber")
 
 	invitationCompleteData, err := handler.invitationStore.FindOneCompleteDataByWANumber(ctx, waNumber)
@@ -23,6 +24,9 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 		response.Respond(w, http.StatusOK, resp)
 		return
 	}
+
+	// STILL NEED TO BE FIXED LATER
+	invitationData, err := handler.invitationStore.FindOneByID(ctx, invitationId)
 
 	var qrImageLink string
 	if invitationCompleteData.User.QRImage != "" {
@@ -50,8 +54,8 @@ func (handler *invitationHandler) GetInvitationCompleteDataByWANumber(w http.Res
 	resp := GetInvitationCompleteDataResponse{
 		Message: "success",
 		Invitation: InvidationData{
-			ID:       invitationCompleteData.Invitation.ID,
-			Name:     invitationCompleteData.Invitation.Name,
+			ID:       invitationData.ID,
+			Name:     invitationData.Name,
 			Type:     invitationCompleteData.Invitation.Type,
 			Status:   invitationCompleteData.Invitation.Status,
 			Schedule: invitationCompleteData.Invitation.Schedule,
