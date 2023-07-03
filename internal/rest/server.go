@@ -50,6 +50,10 @@ func New(
 	invitationHandler := invitationhandler.NewInvitationHandler(cfg.API, sqlDB, invitationStore)
 	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient)
 
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Afra & Akram Wedding Backend APIs"))
+	})
+
 	r.Route("/invitations", func(r chi.Router) {
 		r.Get("/{id}", invitationHandler.GetInvitationCompleteData)
 		r.Get("/{id}/group/{waNumber}", invitationHandler.GetInvitationCompleteDataByWANumber)
