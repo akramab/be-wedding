@@ -21,8 +21,6 @@ func New(
 	cfg *config.Config,
 	zlogger zerolog.Logger,
 	sqlDB *sql.DB,
-	whatsAppClient whatsapp.Client,
-
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -42,6 +40,12 @@ func New(
 
 	invitationStore := storepgsql.NewInvitation(sqlDB)
 	userStore := storepgsql.NewUser(sqlDB)
+
+	whatsAppClient, whatsAppClientErr := whatsapp.NewWhatsMeowClient(cfg.WhatsApp, userStore, invitationStore)
+	if whatsAppClientErr != nil {
+		zlogger.Error().Err(whatsAppClientErr).Msgf("rest: main failed to construct WhatsApp client: %s", whatsAppClientErr)
+		return nil
+	}
 
 	invitationHandler := invitationhandler.NewInvitationHandler(cfg.API, sqlDB, invitationStore)
 	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient)

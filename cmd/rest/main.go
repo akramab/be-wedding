@@ -5,7 +5,6 @@ import (
 	"be-wedding/internal/rest"
 	"be-wedding/pkg/logger"
 	"be-wedding/pkg/pgsql"
-	"be-wedding/pkg/whatsapp"
 	"flag"
 	"fmt"
 	"log"
@@ -46,17 +45,10 @@ func main() {
 		}
 	}
 
-	// WhatsApp Client
-	whatsAppClient, whatsAppClientErr := whatsapp.NewWhatsMeowClient(cfg.WhatsApp)
-	if whatsAppClientErr != nil {
-		zlogger.Error().Err(whatsAppClientErr).Msgf("rest: main failed to construct WhatsApp client: %s", whatsAppClientErr)
-		return
-	}
-
 	// -----------------------------------------------------------------------------------------------------------------
 	// SERVER SETUP AND EXECUTE
 	// -----------------------------------------------------------------------------------------------------------------
-	restServerHandler := rest.New(cfg, zlogger, sqlDB, whatsAppClient)
+	restServerHandler := rest.New(cfg, zlogger, sqlDB)
 
 	zlogger.Info().Msgf("REST Server started on port %d", cfg.API.RESTPort)
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.API.RESTPort), restServerHandler)

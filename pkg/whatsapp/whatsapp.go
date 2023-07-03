@@ -1,6 +1,7 @@
 package whatsapp
 
 import (
+	"be-wedding/internal/store"
 	"context"
 	"fmt"
 	"log"
@@ -24,7 +25,7 @@ type Client interface {
 	SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error
 }
 
-func NewWhatsMeowClient(waCfg Config) (Client, error) {
+func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore store.Invitation) (Client, error) {
 	if waCfg.EnableNotification {
 		dbLog := waLog.Stdout("Database", "DEBUG", true)
 		// Make sure you add appropriate DB connector imports, e.g. github.com/mattn/go-sqlite3 for SQLite
@@ -65,9 +66,17 @@ func NewWhatsMeowClient(waCfg Config) (Client, error) {
 			}
 		}
 
-		return &whatsMeow{
+		wm := &whatsMeow{
 			Client: client,
-		}, nil
+			userStore: userStore,
+			invitationStore: invitationStore,
+		}
+		wm.Client.AddEventHandler(wm.eventHandler)
+
+		return wm, nil
+		// return &whatsMeow{
+		// 	Client: client,
+		// }, nil
 	}
 
 	return &waClientMock{}, nil
@@ -84,7 +93,15 @@ func (mock *waClientMock) SendImageMessage(ctx context.Context, recipientNumber 
 }
 
 type whatsMeow struct {
-	Client *whatsmeow.Client
+	Client          *whatsmeow.Client
+	userStore       store.User
+	invitationStore store.Invitation
+}
+
+type whatsMeowEventHandler struct {
+	Client          *whatsmeow.Client
+	userStore       store.User
+	invitationStore store.Invitation
 }
 
 func (wm *whatsMeow) SendMessage(ctx context.Context, recipientNumber string, message *waProto.Message) error {
