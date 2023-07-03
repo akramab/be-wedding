@@ -55,14 +55,14 @@ func (handler *userHandler) CreateUserRSVP(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	userRSVPMessage := proto.String(fmt.Sprintf(`Terima kasih telah mengisi RSVP. 
+	userRSVPMessage := proto.String(fmt.Sprintf(`Terima kasih telah mengisi konfirmasi kehadiran
 
-Berikut ini rekap rencana kehadiran anda:
+Berikut ini rekap rencana kehadiran yang tercatat:
 
 *Nama*			: %s
 *Jumlah Orang*	: %d
 
-Berikut ini kami lampirkan pula code QR sebagai tiket masuk anda.`, invitationCompleteData.User.Name, userRSVP.PeopleCount))
+Berikut ini kami lampirkan pula kode QR sebagai tiket masuk anda`, invitationCompleteData.User.Name, userRSVP.PeopleCount))
 	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
 		Conversation: userRSVPMessage,
 	})

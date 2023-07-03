@@ -13,8 +13,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"google.golang.org/protobuf/proto"
 )
 
 type CreateNewUserRequest struct {
@@ -61,18 +59,6 @@ func (handler *userHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err := handler.userStore.Insert(ctx, newUserData); err != nil {
 		log.Println("error insert new user data: %w", err)
 		response.Error(w, apierror.BadRequestError(fmt.Sprintf("phone number: %s already exists!", newUserData.WhatsAppNumber)))
-		return
-	}
-
-	whatsAppRegisteredMessage := proto.String(`Nomor WhatsApp anda telah sukses terdaftar. 
-		
-Terima kasih sudah menyempatkan waktu untuk membuka undangan Resepsi kami.`)
-	err = handler.waClient.SendMessage(ctx, newUserData.WhatsAppNumber, &waProto.Message{
-		Conversation: whatsAppRegisteredMessage,
-	})
-	if err != nil {
-		log.Println(err)
-		response.Error(w, apierror.BadRequestError(err.Error()))
 		return
 	}
 

@@ -33,17 +33,26 @@ func (handler *userHandler) RemindUserSendWeddingVideo(w http.ResponseWriter, r 
 		response.Error(w, apierror.InternalServerError())
 	}
 
-	reminderMessage := proto.String(`Terima kasih telah berkenan untuk mengirim video. 
+	reminderMessage := proto.String(`Terima kasih telah bersedia mengirim ucapan
 		
-Ketentuan Video:
+Kami *tidak berkenan menerima karangan bunga* secara fisik. Namun, kami sangat menantikan ucapan berupa foto atau video yang akan ditampilkan pada hari pernikahan dengan ketentuan:
+
+*1) Ketentuan Foto* 
+a. Foto dapat berupa poster, ucapan selamat, ataupun jenis foto yang lain
+b. Format foto dalam .png, .jpg, atau .pdf
+c. Foto dibuat dalam layout landscape
+d. Ukuran dimensi foto dibebaskan
+
+*2) Ketentuan Video*
 a. Video dapat berupa film pendek, vlog, video musik, parodi, ataupun jenis video yang lain
 b. Format .mp4, .mkv atau .mov
 c. Video dibuat dalam layout landscape
 d. Durasi maksimal 1 menit
 
-Video dapat dikirimkan melalui nomer WhatsApp ini. 
+Foto dan/atau Video dapat dikirimkan melalui nomer WhatsApp ini
 
-*Ketik angka 23 jika anda ingin mengirim video*`)
+
+*Ketik angka 23 jika anda ingin mengirim foto atau video*`)
 	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
 		Conversation: reminderMessage,
 	})

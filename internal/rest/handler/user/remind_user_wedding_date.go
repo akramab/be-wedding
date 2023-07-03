@@ -33,7 +33,7 @@ func (handler *userHandler) RemindUserWeddingDate(w http.ResponseWriter, r *http
 		response.Error(w, apierror.InternalServerError())
 	}
 
-	reminderMessage := proto.String(`Terima kasih telah meluangkan waktu. 
+	reminderMessage := proto.String(`Terima kasih telah meluangkan waktu 
 		
 Kami akan mengirimkan reminder pada H-7 dan H-1 acara resepsi ☺️`)
 	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{

@@ -16,8 +16,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	qrcode "github.com/skip2/go-qrcode"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
-	"google.golang.org/protobuf/proto"
 )
 
 type UpdateUserRequest struct {
@@ -87,21 +85,9 @@ func (handler *userHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	dc.DrawImage(im, 0, 20)
 	dc.DrawStringAnchored("Tiket reservasi pernikahan Afra & Akram", S/2, 10, 0.5, 0.5)
 	dc.DrawStringAnchored(fmt.Sprintf("untuk %s", invitationCompleteData.User.Name), S/2, 20, 0.5, 0.5)
-	
+
 	dc.Clip()
 	dc.SavePNG(finalFilePath)
-
-	userCompletedDataMessage := proto.String(fmt.Sprintf(`Terima kasih %s. 
-		
-Sampai berjumpa di hari-H Resepsi.`, userData.Name))
-	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
-		Conversation: userCompletedDataMessage,
-	})
-	if err != nil {
-		log.Println(err)
-		response.Error(w, apierror.BadRequestError(err.Error()))
-		return
-	}
 
 	resp := UpdateUserResponse{
 		Message: "success",
