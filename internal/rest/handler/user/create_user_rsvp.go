@@ -62,7 +62,7 @@ Berikut ini rekap rencana kehadiran yang tercatat:
 *Nama*			: %s
 *Jumlah Orang*	: %d
 
-Berikut ini kami lampirkan pula kode QR sebagai tiket masuk anda`, invitationCompleteData.User.Name, userRSVP.PeopleCount))
+Berikut ini kami lampirkan pula code QR sebagai tiket masuk anda`, invitationCompleteData.User.Name, userRSVP.PeopleCount))
 	err = handler.waClient.SendMessage(ctx, invitationCompleteData.User.WhatsAppNumber, &waProto.Message{
 		Conversation: userRSVPMessage,
 	})
