@@ -14,6 +14,7 @@ require (
 	github.com/makiuchi-d/gozxing v0.1.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/pelletier/go-toml v1.9.5
+	github.com/redis/go-redis/v9 v9.0.5
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.29.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -32,6 +33,8 @@ require (
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

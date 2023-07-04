@@ -5,6 +5,7 @@ import (
 	"be-wedding/internal/rest"
 	"be-wedding/pkg/logger"
 	"be-wedding/pkg/pgsql"
+	"be-wedding/pkg/redis"
 	"flag"
 	"fmt"
 	"log"
@@ -45,10 +46,17 @@ func main() {
 		}
 	}
 
+	// REDIS
+	redisCache, redisCacheErr := redis.NewClient(cfg.Redis)
+	if redisCacheErr != nil {
+		zlogger.Error().Err(sqlDBErr).Msgf("rest: main failed to connect redis: %s", redisCacheErr)
+		return
+	}
+
 	// -----------------------------------------------------------------------------------------------------------------
 	// SERVER SETUP AND EXECUTE
 	// -----------------------------------------------------------------------------------------------------------------
-	restServerHandler := rest.New(cfg, zlogger, sqlDB)
+	restServerHandler := rest.New(cfg, zlogger, sqlDB, redisCache)
 
 	zlogger.Info().Msgf("REST Server started on port %d", cfg.API.RESTPort)
 	http.ListenAndServe(fmt.Sprintf(":%d", cfg.API.RESTPort), restServerHandler)

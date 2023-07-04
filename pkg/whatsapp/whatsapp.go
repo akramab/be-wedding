@@ -2,6 +2,7 @@ package whatsapp
 
 import (
 	"be-wedding/internal/store"
+	"be-wedding/pkg/redis"
 	"context"
 	"fmt"
 	"log"
@@ -25,7 +26,7 @@ type Client interface {
 	SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error
 }
 
-func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore store.Invitation) (Client, error) {
+func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore store.Invitation, redisCache redis.Client) (Client, error) {
 	if waCfg.EnableNotification {
 		dbLog := waLog.Stdout("Database", "DEBUG", true)
 		// Make sure you add appropriate DB connector imports, e.g. github.com/mattn/go-sqlite3 for SQLite
@@ -67,9 +68,10 @@ func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore stor
 		}
 
 		wm := &whatsMeow{
-			Client: client,
-			userStore: userStore,
+			Client:          client,
+			userStore:       userStore,
 			invitationStore: invitationStore,
+			redisCache:      redisCache,
 		}
 		wm.Client.AddEventHandler(wm.eventHandler)
 
@@ -96,6 +98,7 @@ type whatsMeow struct {
 	Client          *whatsmeow.Client
 	userStore       store.User
 	invitationStore store.Invitation
+	redisCache      redis.Client
 }
 
 type whatsMeowEventHandler struct {

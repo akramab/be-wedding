@@ -6,6 +6,7 @@ import (
 	userhandler "be-wedding/internal/rest/handler/user"
 	"be-wedding/internal/rest/middleware"
 	storepgsql "be-wedding/internal/store/pgsql"
+	"be-wedding/pkg/redis"
 	"be-wedding/pkg/token"
 	"be-wedding/pkg/whatsapp"
 	"database/sql"
@@ -21,6 +22,7 @@ func New(
 	cfg *config.Config,
 	zlogger zerolog.Logger,
 	sqlDB *sql.DB,
+	redisCache redis.Client,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -41,7 +43,7 @@ func New(
 	invitationStore := storepgsql.NewInvitation(sqlDB)
 	userStore := storepgsql.NewUser(sqlDB)
 
-	whatsAppClient, whatsAppClientErr := whatsapp.NewWhatsMeowClient(cfg.WhatsApp, userStore, invitationStore)
+	whatsAppClient, whatsAppClientErr := whatsapp.NewWhatsMeowClient(cfg.WhatsApp, userStore, invitationStore, redisCache)
 	if whatsAppClientErr != nil {
 		zlogger.Error().Err(whatsAppClientErr).Msgf("rest: main failed to construct WhatsApp client: %s", whatsAppClientErr)
 		return nil

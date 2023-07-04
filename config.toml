@@ -38,3 +38,8 @@ auth = false
 
 [whatsapp]
 enable_notification = true
+
+[redis]
+enable_cache = true
+address = "localhost:6379"
+password = ""

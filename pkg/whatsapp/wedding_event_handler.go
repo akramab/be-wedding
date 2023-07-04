@@ -6,7 +6,9 @@ import (
 	"image"
 	"io/fs"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/makiuchi-d/gozxing"
@@ -14,6 +16,14 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
+)
+
+const (
+	StateUploadPhotoVideo = "UPLOAD_PHOTO_VIDEO"
+	StateSendQRCode       = "SEND_QR_CODE"
+	StateChangeRSPV       = "CHANGE_RSVP"
+
+	DefaultCacheTime = time.Duration(1) * time.Minute
 )
 
 func (wm *whatsMeow) eventHandler(evt interface{}) {
@@ -33,112 +43,220 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 			}
 
 			userMessage := v.Message.GetConversation()
+			userState, err := wm.redisCache.Get(context.Background(), invitationCompleteData.User.ID).Result()
+
+			switch userState {
+			case StateUploadPhotoVideo:
+				if v.Message.GetVideoMessage() != nil {
+					fmt.Println("VIDEO EXISTS")
+					videoMessage := v.Message.GetVideoMessage()
+					videoData, err := wm.Client.Download(videoMessage)
+					if err != nil {
+						fmt.Println("ERROR DOWNLOAD VIDEO")
+						return
+					}
+					videoMIMEType := videoMessage.GetMimetype()
+					fmt.Printf("VIDEO MIMETYPE: %s \n", videoMIMEType)
+
+					videoName := uuid.New().String()
+					err = os.WriteFile(fmt.Sprintf("./static/videos/%s-video.%s", videoName, strings.Split(videoMIMEType, "/")[1]), videoData, fs.ModePerm)
+					if err != nil {
+						fmt.Println("ERROR WRITE FILE")
+						fmt.Println(err.Error())
+					}
+
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Terima kasih. Video Ucapan anda telah berhasil disimpan"),
+					})
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					return
+				} else if v.Message.GetImageMessage() != nil {
+					fmt.Println("IMAGE EXISTS")
+					imageMessage := v.Message.GetImageMessage()
+					imageData, err := wm.Client.Download(imageMessage)
+					if err != nil {
+						fmt.Println("ERROR DOWNLOAD IMAGE")
+						return
+					}
+					imageMIMEType := imageMessage.GetMimetype()
+					fmt.Printf("IMAGE MIMETYPE: %s \n", imageMIMEType)
+
+					// permissions := 0644 // or whatever you need
+					// byteArray := []byte("to be written to a file\n")
+					imageName := uuid.New().String()
+					err = os.WriteFile(fmt.Sprintf("./static/images/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]), imageData, fs.ModePerm)
+					if err != nil {
+						fmt.Println("ERROR WRITE FILE")
+						fmt.Println(err.Error())
+					}
+
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Terima kasih. Foto Ucapan anda telah berhasil disimpan"),
+					})
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					return
+				} else if userMessage == "0" {
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Pengiriman ucapan dibatalkan"),
+					})
+					return
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Silakan kirimkan foto atau video ucapan anda. Tekan 0 jika anda ingin membatalkan"),
+					})
+					return
+				}
+			case StateSendQRCode:
+				if v.Message.GetImageMessage() != nil {
+					fmt.Println("IMAGE EXISTS")
+					imageMessage := v.Message.GetImageMessage()
+					imageData, err := wm.Client.Download(imageMessage)
+					if err != nil {
+						fmt.Println("ERROR DOWNLOAD IMAGE")
+						return
+					}
+					imageMIMEType := imageMessage.GetMimetype()
+					fmt.Printf("IMAGE MIMETYPE: %s \n", imageMIMEType)
+
+					// permissions := 0644 // or whatever you need
+					// byteArray := []byte("to be written to a file\n")
+					imageName := uuid.New().String()
+					err = os.WriteFile(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]), imageData, fs.ModePerm)
+					if err != nil {
+						fmt.Println("ERROR WRITE FILE")
+						fmt.Println(err.Error())
+					}
+
+					file, err := os.Open(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]))
+					if err != nil {
+						fmt.Println("ERROR OPEN IMAGE")
+						fmt.Println(err)
+					}
+
+					img, _, err := image.Decode(file)
+					if err != nil {
+						fmt.Println("ERROR DECODE IMAGE")
+						fmt.Println(err)
+					}
+
+					// prepare BinaryBitmap
+					bmp, err := gozxing.NewBinaryBitmapFromImage(img)
+					if err != nil {
+						fmt.Println("ERROR gozxing bitmap IMAGE")
+						fmt.Println(err)
+					}
+
+					// update state to default
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+
+					// decode image
+					qrReader := gozqrcode.NewQRCodeReader()
+					qrDecodeResult, err := qrReader.Decode(bmp, nil)
+					if err != nil {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String("QR Code tidak valid"),
+						})
+						return
+					}
+					fmt.Println("QR CODE DECODE RESULT")
+
+					// TODO: update attendance, link video
+					invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
+					if err != nil {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan"),
+						})
+						return
+					}
+
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
+					})
+					return
+				} else if v.Message.GetConversation() == "0" {
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Pengiriman code QR dibatalkan"),
+					})
+					return
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Mohon kirimkan code QR anda. Tekan 0 jika anda ingin membatalkan"),
+					})
+					return
+				}
+			case StateChangeRSPV:
+				var changeRSVPValid bool
+				if _, err := strconv.Atoi(userMessage); err == nil && userMessage != "0" {
+					changeRSVPValid = true
+				}
+				if changeRSVPValid {
+					// NEED TO UPDATE RSVP
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+
+					replyMessage := fmt.Sprintf(`Data konfirmasi kehadiran anda telah diperbarui
+
+Berikut ini rekap rencana kehadiran yang tercatat:
+					
+*Nama*			: %s
+*Jumlah Orang*	: %s
+					
+Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationCompleteData.User.Name, userMessage)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(replyMessage),
+					})
+					return
+				} else if userMessage == "0" {
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Pengubahan jumlah kehadiran dibatalkan"),
+					})
+					return
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Maaf, jumlah kehadiran baru anda tidak dapat diproses. Silakan ketik kembali jumlah kehadiran baru anda dalam *angka*. Ketik 0 jika anda ingin membatalkan"),
+					})
+					return
+				}
+			}
+
 			switch userMessage {
 			case "1":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
+				replyMessage := `Anda akan mengubah jumlah kehadiran
+				
+Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Nama yang terdaftar saat ini: %s; Judul video anda di server: %s", invitationCompleteData.User.Name, invitationCompleteData.User.QRImage)),
+					Conversation: proto.String(replyMessage),
 				})
 				return
 			case "23":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateUploadPhotoVideo, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String("Silakan kirimkan video anda"),
+					Conversation: proto.String("Silakan kirimkan foto atau video ucapan anda"),
 				})
 				return
-			// default:
-			// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-			// 		Conversation: proto.String("Nama anda telah berhasil disimpan. Ketik 1 untuk mengganti nama, 2 untuk mengirim video, dan 3 untuk melihat nama yang terdaftar saat ini"),
-			// 	})
-			// 	return
-			}
-
-			if v.Message.GetVideoMessage() != nil {
-				fmt.Println("VIDEO EXISTS")
-				videoMessage := v.Message.GetVideoMessage()
-				videoData, err := wm.Client.Download(videoMessage)
-				if err != nil {
-					fmt.Println("ERROR DOWNLOAD VIDEO")
-					return
-				}
-				videoMIMEType := videoMessage.GetMimetype()
-				fmt.Printf("VIDEO MIMETYPE: %s \n", videoMIMEType)
-
-				videoName := uuid.New().String()
-				err = os.WriteFile(fmt.Sprintf("./static/videos/%s-video.%s", videoName, strings.Split(videoMIMEType, "/")[1]), videoData, fs.ModePerm)
-				if err != nil {
-					fmt.Println("ERROR WRITE FILE")
-					fmt.Println(err.Error())
-				}
-
+			case "1819":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateSendQRCode, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String("Video anda telah berhasil disimpan."),
+					Conversation: proto.String("Silakan kirimkan QR code anda"),
 				})
 				return
 			}
 
-			if v.Message.GetImageMessage() != nil {
-				fmt.Println("IMAGE EXISTS")
-				imageMessage := v.Message.GetImageMessage()
-				imageData, err := wm.Client.Download(imageMessage)
-				if err != nil {
-					fmt.Println("ERROR DOWNLOAD IMAGE")
-					return
-				}
-				imageMIMEType := imageMessage.GetMimetype()
-				fmt.Printf("IMAGE MIMETYPE: %s \n", imageMIMEType)
+			replyMessage := `Pesan anda tidak dikenali
 
-				// permissions := 0644 // or whatever you need
-				// byteArray := []byte("to be written to a file\n")
-				imageName := uuid.New().String()
-				err = os.WriteFile(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]), imageData, fs.ModePerm)
-				if err != nil {
-					fmt.Println("ERROR WRITE FILE")
-					fmt.Println(err.Error())
-				}
-
-				file, err := os.Open(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]))
-				if err != nil {
-					fmt.Println("ERROR OPEN IMAGE")
-					fmt.Println(err)
-				}
-
-				img, _, err := image.Decode(file)
-				if err != nil {
-					fmt.Println("ERROR DECODE IMAGE")
-					fmt.Println(err)
-				}
-
-				// prepare BinaryBitmap
-				bmp, err := gozxing.NewBinaryBitmapFromImage(img)
-				if err != nil {
-					fmt.Println("ERROR gozxing bitmap IMAGE")
-					fmt.Println(err)
-				}
-
-				// decode image
-				qrReader := gozqrcode.NewQRCodeReader()
-				qrDecodeResult, err := qrReader.Decode(bmp, nil)
-				if err != nil {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String("QR Code tidak valid."),
-					})
-					return
-				}
-				fmt.Println("QR CODE DECODE RESULT")
-
-				// TODO: update attendance, link video
-				invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
-				if err != nil {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan."),
-					})
-					return
-				}
-
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
-				})
-				return
-			}
+Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
+			
+- Tekan *1* untuk *mengubah jumlah konfirmasi kehadiran*
+- Tekan *23* untuk *mengirim foto atau video ucapan*
+			
+Terima kasih`
+			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+				Conversation: proto.String(replyMessage),
+			})
+			return
 		}
 	}
 }
