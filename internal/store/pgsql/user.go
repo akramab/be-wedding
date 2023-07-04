@@ -151,10 +151,12 @@ func (s *User) InsertComment(ctx context.Context, userComment *store.UserComment
 
 }
 
-const userFindAllCommentQuery = `SELECT uc.id, uc.user_id, u.name, uc.comment, uc.created_at
+const userFindAllCommentQuery = `SELECT uc.id, uc.user_id, u.name, uc.comment, uc.created_at, count(ucl.id) 
 	FROM user_comments uc
 	LEFT JOIN users u
 	ON uc.user_id = u.id
+	LEFT JOIN user_comment_likes ucl 
+	ON uc.id = ucl.comment_id 
 	`
 
 func (s *User) FindAllComment(ctx context.Context, startDate string, endDate string) ([]*store.UserCommentData, error) {
@@ -189,6 +191,10 @@ func (s *User) FindAllComment(ctx context.Context, startDate string, endDate str
 		}
 	}
 
+	query = query + `GROUP BY uc.id, uc.user_id, u."name", uc."comment", uc.created_at
+ORDER BY count(ucl.id) DESC, uc.created_at DESC
+	`
+
 	rows, err := s.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
 		return nil, err
@@ -203,6 +209,7 @@ func (s *User) FindAllComment(ctx context.Context, startDate string, endDate str
 			&userComment.UserName,
 			&userComment.Comment,
 			&userComment.CreatedAt,
+			&userComment.Like,
 		)
 		if err != nil {
 			return nil, err
@@ -248,7 +255,8 @@ func (r *User) FindAllCommentPagination(ctx context.Context, offset int, limit i
 		}
 	}
 
-	query = query + `ORDER BY uc.created_at DESC LIMIT $2 OFFSET $1 `
+	query = query + `GROUP BY uc.id, uc.user_id, u."name", uc."comment", uc.created_at
+ORDER BY count(ucl.id) DESC, uc.created_at DESC LIMIT $2 OFFSET $1 `
 
 	rows, err := r.db.QueryContext(ctx, query, queryParams...)
 	if err != nil {
@@ -264,6 +272,7 @@ func (r *User) FindAllCommentPagination(ctx context.Context, offset int, limit i
 			&userComment.UserName,
 			&userComment.Comment,
 			&userComment.CreatedAt,
+			&userComment.Like,
 		)
 		if err != nil {
 			log.Println("user sql repo scan error: %w", err)

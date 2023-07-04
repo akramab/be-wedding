@@ -138,19 +138,10 @@ func (handler *userHandler) GetUserCommentList(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	userCommentLikeCountList, err := handler.userStore.FindLikedCommentCount(ctx)
-	if err != nil {
-		log.Println(err)
-
-		response.Error(w, apierror.InternalServerError())
-		return
-	}
-
 	resp := GetUserCommentListResponse{}
 	items := make([]UserCommentItem, itemsCount)
 	for idx, item := range userCommentList {
 		var isLiked bool
-		var likeCount int64
 		for _, userCommentLike := range userCommentLikeList {
 			if item.ID == userCommentLike.CommentID {
 				isLiked = true
@@ -158,18 +149,12 @@ func (handler *userHandler) GetUserCommentList(w http.ResponseWriter, r *http.Re
 			}
 		}
 
-		for _, userCommentLikeCount := range userCommentLikeCountList {
-			if item.ID == userCommentLikeCount.CommentID {
-				likeCount = userCommentLikeCount.LikeCount
-				break
-			}
-		}
 		items[idx] = UserCommentItem{
 			ID:        item.ID,
 			UserID:    item.UserID,
 			UserName:  item.UserName,
 			Comment:   item.Comment,
-			LikeCount: likeCount,
+			LikeCount: item.Like,
 			IsLiked:   isLiked,
 			CreatedAt: item.CreatedAt,
 		}

@@ -9,3 +9,4 @@ coverage.*
 .DS_Store
 /main.go
 /whatsappcred.db
+/rest
