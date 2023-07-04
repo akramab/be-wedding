@@ -18,9 +18,10 @@ type InvitationResponse struct {
 }
 
 type CreateInvitationRequest struct {
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Session int64  `json:"session"`
+	Type     string `json:"type"`
+	Name     string `json:"name"`
+	Session  int64  `json:"session"`
+	CustomID string `json:"custom_id"`
 }
 
 func (handler *invitationHandler) CreateInvitation(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +35,7 @@ func (handler *invitationHandler) CreateInvitation(w http.ResponseWriter, r *htt
 	}
 
 	newInvitation := store.InvitationData{
+		ID:      req.CustomID,
 		Type:    req.Type,
 		Name:    req.Name,
 		Session: req.Session,

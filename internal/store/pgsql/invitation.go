@@ -45,7 +45,13 @@ func (s *Invitation) Insert(ctx context.Context, invitation *store.InvitationDat
 		sessionID = store.InvitationSession2ID
 
 	}
-	invitationID := uniuri.NewLen(6)
+
+	var invitationID string
+	if invitation.ID != "" {
+		invitationID = invitation.ID
+	} else {
+		invitationID = uniuri.NewLen(6)
+	}
 	createdAt := time.Now().UTC()
 
 	invitationStatus := store.InvitationStatusAvailable
