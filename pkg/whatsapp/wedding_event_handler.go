@@ -231,6 +231,32 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 					Conversation: proto.String(replyMessage),
 				})
 				return
+			case "2":
+				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
+
+*Nama*			: %s
+*Jumlah Orang*	: %d
+
+*Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(replyMessage),
+				})
+				return
+			case "3":
+				replyMessage := `Berikut ini code QR anda`
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(replyMessage),
+				})
+
+				captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
+				err = wm.SendImageMessage(context.Background(), invitationCompleteData.User.WhatsAppNumber, invitationCompleteData.User.QRImage, captionImageMessage)
+				if err != nil {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Maaf terjadi kesalahan saat mengirimkan code QR. Silakan coba kembali"),
+					})
+					return
+				}
+				return
 			case "23":
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateUploadPhotoVideo, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
@@ -250,6 +276,8 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
 			
 - Tekan *1* untuk *mengubah jumlah konfirmasi kehadiran*
+- Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
+- Tekan *3* untuk *mendapatkan kembali code QR anda*
 - Tekan *23* untuk *mengirim foto atau video ucapan*
 			
 Terima kasih`
