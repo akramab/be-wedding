@@ -514,3 +514,34 @@ func (s *User) InsertUserRSVP(ctx context.Context, userRSVP *store.UserRSVPData)
 	return nil
 
 }
+
+const userRSVPUpdateByUserIDQuery = `UPDATE user_rsvps
+	SET people_count = $2, updated_at = $3
+	WHERE user_id = $1
+`
+
+func (s *User) UpdateRSVPByUserID(ctx context.Context, userRSVP *store.UserRSVPData) error {
+	updateStmt, err := s.db.PrepareContext(ctx, userRSVPUpdateByUserIDQuery)
+	if err != nil {
+		return err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	updatedAt := time.Now().UTC()
+	_, err = tx.StmtContext(ctx, updateStmt).ExecContext(ctx,
+		userRSVP.UserID, userRSVP.PeopleCount, updatedAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
+	}
+
+	return nil
+}

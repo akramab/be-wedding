@@ -67,4 +67,5 @@ type User interface {
 	FindLikedCommentCount(ctx context.Context) ([]*UserCommentLikeCountData, error)
 	FindOneCommentByUserID(ctx context.Context, userID string) (*UserCommentData, error)
 	InsertUserRSVP(ctx context.Context, userRSVP *UserRSVPData) error
+	UpdateRSVPByUserID(ctx context.Context, userRSVP *UserRSVPData) error
 }

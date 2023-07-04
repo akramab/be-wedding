@@ -1,6 +1,7 @@
 package whatsapp
 
 import (
+	"be-wedding/internal/store"
 	"context"
 	"fmt"
 	"image"
@@ -188,21 +189,25 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 				}
 			case StateChangeRSPV:
 				var changeRSVPValid bool
-				if _, err := strconv.Atoi(userMessage); err == nil && userMessage != "0" {
+				var newPeopleCount int
+				if newPeopleCount, err = strconv.Atoi(userMessage); err == nil && userMessage != "0" {
 					changeRSVPValid = true
 				}
 				if changeRSVPValid {
-					// NEED TO UPDATE RSVP
 					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
 
+					wm.userStore.UpdateRSVPByUserID(context.Background(), &store.UserRSVPData{
+						UserID:      invitationCompleteData.User.ID,
+						PeopleCount: int64(newPeopleCount),
+					})
 					replyMessage := fmt.Sprintf(`Data konfirmasi kehadiran anda telah diperbarui
 
 Berikut ini rekap rencana kehadiran yang tercatat:
 					
 *Nama*			: %s
-*Jumlah Orang*	: %s
+*Jumlah Orang*	: %d
 					
-Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationCompleteData.User.Name, userMessage)
+Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationCompleteData.User.Name, newPeopleCount)
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 						Conversation: proto.String(replyMessage),
 					})
@@ -275,7 +280,7 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 
 Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
 			
-- Tekan *1* untuk *mengubah jumlah konfirmasi kehadiran*
+- Tekan *1* untuk *mengubah data jumlah konfirmasi kehadiran*
 - Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
 - Tekan *3* untuk *mendapatkan kembali code QR anda*
 - Tekan *23* untuk *mengirim foto atau video ucapan*
