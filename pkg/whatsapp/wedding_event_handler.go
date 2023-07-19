@@ -180,6 +180,16 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 
 					// TEST
 					testUserId := strings.TrimSpace(qrDecodeResult.GetText())
+
+					var currentIdx int
+					currentIdxString, _ := wm.redisCache.Get(context.Background(), GetCurrentIndex).Result()
+					if currentIdxString == "" {
+						currentIdx = 0
+					} else {
+						currentIdx, _ = strconv.Atoi(currentIdxString)
+						currentIdx++
+					}
+
 					videoListString, _ := wm.redisCache.Get(context.Background(), GetCurrentVideoList).Result()
 					if videoListString == "" {
 						videoListString = strings.Join([]string{"https://api.kramili.site/static/3.mp4", "https://api.kramili.site/static/5.mp4"}, StringSeparator)
@@ -187,19 +197,29 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 					videoList := strings.Split(videoListString, ",")
 
 					if testUserId == "a180b098-8568-4ec3-9822-48a313b83047" {
-						videoList = append(videoList, "https://api.kramili.site/static/1.mp4")
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/1.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/1.mp4")
 					}
 					if testUserId == "484d20a6-8097-447a-bf4f-fbdef7db6eca" {
-						videoList = append(videoList, "https://api.kramili.site/static/2.mp4")
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/2.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/2.mp4")
 					}
 					if testUserId == "7e4a645b-341e-420a-81b3-f38f85629ff8" {
-						videoList = append(videoList, "https://api.kramili.site/static/4.mp4")
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/4.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/4.mp4")
 					}
 					if testUserId == "0c467423-e324-4786-a9d9-0c77eb267407" {
-						videoList = append(videoList, "https://api.kramili.site/static/6.mp4")
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/6.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/6.mp4")
 					}
 					if testUserId == "69fee15d-2c45-48ea-982e-4ce6327298fc" {
-						videoList = append(videoList, "https://api.kramili.site/static/7.mp4")
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/7.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/7.mp4")
 					}
 					wm.redisCache.Set(context.Background(), GetCurrentVideoList, strings.Join(videoList, ","), DefaultCacheTimeVideo)
 
