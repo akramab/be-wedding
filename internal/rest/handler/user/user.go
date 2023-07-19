@@ -6,6 +6,7 @@ import (
 
 	"be-wedding/internal/config"
 	"be-wedding/internal/store"
+	"be-wedding/pkg/redis"
 	"be-wedding/pkg/whatsapp"
 )
 
@@ -21,6 +22,7 @@ type UserHandler interface {
 	RemindUserWeddingDate(w http.ResponseWriter, r *http.Request)
 	RemindUserSendWeddingVideo(w http.ResponseWriter, r *http.Request)
 	DownloadQRCode(w http.ResponseWriter, r *http.Request)
+	GetCurrentVideo(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler struct {
@@ -29,14 +31,16 @@ type userHandler struct {
 	userStore       store.User
 	invitationStore store.Invitation
 	waClient        whatsapp.Client
+	redisCache      redis.Client
 }
 
-func NewUserHandler(apiCfg config.API, db *sql.DB, userStore store.User, invitationStore store.Invitation, waClient whatsapp.Client) UserHandler {
+func NewUserHandler(apiCfg config.API, db *sql.DB, userStore store.User, invitationStore store.Invitation, waClient whatsapp.Client, redisCache redis.Client) UserHandler {
 	return &userHandler{
 		apiCfg:          apiCfg,
 		db:              db,
 		userStore:       userStore,
 		invitationStore: invitationStore,
-		waClient: waClient,
+		waClient:        waClient,
+		redisCache:      redisCache,
 	}
 }

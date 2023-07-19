@@ -50,7 +50,7 @@ func New(
 	}
 
 	invitationHandler := invitationhandler.NewInvitationHandler(cfg.API, sqlDB, invitationStore)
-	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient)
+	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient, redisCache)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Afra & Akram Wedding Backend APIs"))
@@ -74,6 +74,8 @@ func New(
 		r.Post("/{id}/reminder/date", userHandler.RemindUserWeddingDate)
 		r.Post("/{id}/reminder/video", userHandler.RemindUserSendWeddingVideo)
 		r.Get("/{id}/qr-code/download", userHandler.DownloadQRCode)
+
+		r.Get("/current-video", userHandler.GetCurrentVideo)
 	})
 
 	r.Route("/auth", func(r chi.Router) {
