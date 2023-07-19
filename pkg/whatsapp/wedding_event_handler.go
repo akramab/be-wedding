@@ -49,8 +49,8 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 
 			userState, err := wm.redisCache.Get(context.Background(), invitationCompleteData.User.ID).Result()
 			userMessage := strings.TrimSpace(v.Message.GetConversation())
-			if userMessage == "" {
-				if v.RawMessage != nil && v.RawMessage.ExtendedTextMessage != nil && v.RawMessage.ExtendedTextMessage.Text != nil && userState != StateUploadPhotoVideo && userState != StateSendQRCode {
+			if userMessage == "" && userState != StateUploadPhotoVideo && userState != StateSendQRCode {
+				if v.RawMessage != nil && v.RawMessage.ExtendedTextMessage != nil && v.RawMessage.ExtendedTextMessage.Text != nil {
 					userMessage = strings.TrimSpace(*v.RawMessage.ExtendedTextMessage.Text)
 				} else {
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
