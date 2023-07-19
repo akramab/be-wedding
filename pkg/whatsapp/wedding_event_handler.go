@@ -24,7 +24,11 @@ const (
 	StateSendQRCode       = "SEND_QR_CODE"
 	StateChangeRSPV       = "CHANGE_RSVP"
 
-	DefaultCacheTime = time.Duration(1) * time.Minute
+	DefaultCacheTime      = time.Duration(1) * time.Minute
+	DefaultCacheTimeVideo = time.Duration(10) * time.Minute
+
+	GetCurrentVideoList = "CURRENT_VIDE_LIST"
+	GetCurrentIndex     = "CURRENT_INDEX"
 )
 
 func (wm *whatsMeow) eventHandler(evt interface{}) {
@@ -43,7 +47,18 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 				return
 			}
 
-			userMessage := v.Message.GetConversation()
+			userMessage := strings.TrimSpace(v.Message.GetConversation())
+			if userMessage == "" {
+				if v.RawMessage != nil && v.RawMessage.ExtendedTextMessage != nil && v.RawMessage.ExtendedTextMessage.Text != nil {
+					userMessage = strings.TrimSpace(*v.RawMessage.ExtendedTextMessage.Text)
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Terjadi kesalahan teknis pada sistem. Pesan dari nomor yang anda gunakan saat ini tidak bisa diproses oleh sistem. Silakan coba kembali menggunakan nomor lain")),
+					})
+					return
+				}
+			}
+
 			userState, err := wm.redisCache.Get(context.Background(), invitationCompleteData.User.ID).Result()
 
 			switch userState {
@@ -161,20 +176,28 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 						return
 					}
 					fmt.Println("QR CODE DECODE RESULT")
+					fmt.Println(qrDecodeResult.GetText())
+
+					// TEST
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", qrDecodeResult.GetText())),
+					})
+
+					return
 
 					// TODO: update attendance, link video
-					invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
-					if err != nil {
-						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-							Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan"),
-						})
-						return
-					}
+					// invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
+					// if err != nil {
+					// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 		Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan"),
+					// 	})
+					// 	return
+					// }
 
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
-					})
-					return
+					// wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 	Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
+					// })
+					// return
 				} else if v.Message.GetConversation() == "0" {
 					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
@@ -272,6 +295,14 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateSendQRCode, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String("Silakan kirimkan QR code anda"),
+				})
+				return
+			case "2306":
+				wm.redisCache.Set(context.Background(), GetCurrentIndex, "", DefaultCacheTimeVideo)
+				wm.redisCache.Set(context.Background(), GetCurrentVideoList, "", DefaultCacheTimeVideo)
+
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String("Daftar video telah berhasil dihapus"),
 				})
 				return
 			}
