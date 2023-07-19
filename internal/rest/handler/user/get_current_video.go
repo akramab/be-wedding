@@ -4,6 +4,7 @@ import (
 	"be-wedding/internal/rest/response"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -32,6 +33,8 @@ func (handler *userHandler) GetCurrentVideo(w http.ResponseWriter, r *http.Reque
 			"https://api.kramili.site/static/3.mp4",
 			"https://api.kramili.site/static/5.mp4",
 		}
+	} else {
+		videoUrlList = strings.Split(videoResultString, ",")
 	}
 
 	if currentIndexResultString == "" {
