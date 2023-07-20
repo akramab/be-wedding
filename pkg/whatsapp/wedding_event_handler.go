@@ -350,7 +350,7 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 					Conversation: proto.String("Daftar video telah berhasil dihapus"),
 				})
 				return
-			case "Broadcast Reminder Ucapan wpVZD":
+			case "Broadcast Reminder Ucapans":
 				if wm.Config.BroadcastMode {
 					waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
 					if err != nil {
