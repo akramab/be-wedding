@@ -213,7 +213,6 @@ func (wm *whatsMeow) SendVideoMessage(ctx context.Context, recipientNumber strin
 		return err
 	}
 
-	gifPlayback := true
 	videoMsg := &waProto.VideoMessage{
 		Caption:  proto.String(captionVideoMessage),
 		Mimetype: proto.String("video/mp4"), // replace this with the actual mime type
@@ -225,7 +224,6 @@ func (wm *whatsMeow) SendVideoMessage(ctx context.Context, recipientNumber strin
 		FileEncSha256: resp.FileEncSHA256,
 		FileSha256:    resp.FileSHA256,
 		FileLength:    &resp.FileLength,
-		GifPlayback:   &gifPlayback,
 	}
 
 	// Remove '+' sign from the target recipient number
