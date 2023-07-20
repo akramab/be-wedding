@@ -24,9 +24,12 @@ const (
 	StateUploadPhotoVideo = "UPLOAD_PHOTO_VIDEO"
 	StateSendQRCode       = "SEND_QR_CODE"
 	StateChangeRSPV       = "CHANGE_RSVP"
+	StateQRAT1            = "QR_AT1"
+	StateQRAT2            = "QR_AT2"
 
 	DefaultCacheTime      = time.Duration(1) * time.Minute
 	DefaultCacheTimeVideo = time.Duration(10) * time.Minute
+	DefaultCacheTimeAdmin = time.Duration(600) * time.Minute
 
 	GetCurrentVideoList = "CURRENT_VIDE_LIST"
 	GetCurrentIndex     = "CURRENT_INDEX"
@@ -282,6 +285,395 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 					})
 					return
 				}
+			case StateQRAT1:
+				if v.Message.GetImageMessage() != nil {
+					fmt.Println("IMAGE EXISTS")
+					imageMessage := v.Message.GetImageMessage()
+					imageData, err := wm.Client.Download(imageMessage)
+					if err != nil {
+						fmt.Println("ERROR DOWNLOAD IMAGE")
+						return
+					}
+					imageMIMEType := imageMessage.GetMimetype()
+					fmt.Printf("IMAGE MIMETYPE: %s \n", imageMIMEType)
+
+					// permissions := 0644 // or whatever you need
+					// byteArray := []byte("to be written to a file\n")
+					imageName := uuid.New().String()
+					err = os.WriteFile(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]), imageData, fs.ModePerm)
+					if err != nil {
+						fmt.Println("ERROR WRITE FILE")
+						fmt.Println(err.Error())
+					}
+
+					file, err := os.Open(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]))
+					if err != nil {
+						fmt.Println("ERROR OPEN IMAGE")
+						fmt.Println(err)
+					}
+
+					img, _, err := image.Decode(file)
+					if err != nil {
+						fmt.Println("ERROR DECODE IMAGE")
+						fmt.Println(err)
+					}
+
+					// prepare BinaryBitmap
+					bmp, err := gozxing.NewBinaryBitmapFromImage(img)
+					if err != nil {
+						fmt.Println("ERROR gozxing bitmap IMAGE")
+						fmt.Println(err)
+					}
+
+					// update state to default
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+
+					// decode image
+					qrReader := gozqrcode.NewQRCodeReader()
+					qrDecodeResult, err := qrReader.Decode(bmp, nil)
+					if err != nil {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String("QR Code tidak valid"),
+						})
+						return
+					}
+					fmt.Println("QR CODE DECODE RESULT")
+					fmt.Println(qrDecodeResult.GetText())
+
+					// TEST
+					testUserId := strings.TrimSpace(qrDecodeResult.GetText())
+
+					var currentIdx int
+					currentIdxString, _ := wm.redisCache.Get(context.Background(), GetCurrentIndex).Result()
+					if currentIdxString == "" {
+						currentIdx = 0
+					} else {
+						currentIdx, _ = strconv.Atoi(currentIdxString)
+						currentIdx++
+					}
+
+					videoListString, _ := wm.redisCache.Get(context.Background(), GetCurrentVideoList).Result()
+					if videoListString == "" {
+						videoListString = strings.Join([]string{"https://api.kramili.site/static/3.mp4", "https://api.kramili.site/static/5.mp4"}, StringSeparator)
+					}
+					videoList := strings.Split(videoListString, ",")
+
+					if testUserId == "a180b098-8568-4ec3-9822-48a313b83047" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/1.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/1.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Agus",
+								PeopleCount:         1,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					if testUserId == "484d20a6-8097-447a-bf4f-fbdef7db6eca" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/2.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/2.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Ahmad",
+								PeopleCount:         2,
+								IsVideoReminderSent: false,
+							},
+						}
+					}
+					if testUserId == "7e4a645b-341e-420a-81b3-f38f85629ff8" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/4.mp4"
+
+						// videoList = append(videoList, "https://api.kramili.site/static/4.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Ibu Dewi",
+								PeopleCount:         3,
+								IsVideoReminderSent: false,
+							},
+						}
+					}
+					if testUserId == "0c467423-e324-4786-a9d9-0c77eb267407" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/6.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/6.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Ridwan",
+								PeopleCount:         4,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					if testUserId == "69fee15d-2c45-48ea-982e-4ce6327298fc" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/7.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/7.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Yoga",
+								PeopleCount:         5,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					wm.redisCache.Set(context.Background(), GetCurrentVideoList, strings.Join(videoList, ","), DefaultCacheTimeVideo)
+
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", qrDecodeResult.GetText())),
+					})
+
+					currentAdmin1ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin1).Result()
+					if currentAdmin1ListString == "" {
+						currentAdmin1ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+					}
+
+					currentAdmin1List := strings.Split(currentAdmin1ListString, ",")
+
+					textForAdmin := `Konfirmasi Kehadiran Berhasil!
+
+Berikut data tamu undangan:
+Nama: 							%s
+Jumlah Konfirmasi Kehadiran: 	%d
+VIP: 							%s`
+					for _, admin1 := range currentAdmin1List {
+						wm.SendMessage(context.Background(), admin1, &waProto.Message{
+							Conversation: proto.String(fmt.Sprintf(textForAdmin,
+								invitationCompleteData.User.Name,
+								invitationCompleteData.User.PeopleCount,
+								strconv.FormatBool(invitationCompleteData.User.IsVideoReminderSent))),
+						})
+					}
+
+					return
+
+					// TODO: update attendance, link video
+					// invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
+					// if err != nil {
+					// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 		Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan"),
+					// 	})
+					// 	return
+					// }
+
+					// wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 	Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
+					// })
+					// return
+				} else if v.Message.GetConversation() == "0" {
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Pengiriman code QR dibatalkan"),
+					})
+					return
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Mohon kirimkan code QR anda. Tekan 0 jika anda ingin membatalkan"),
+					})
+					return
+				}
+			case StateQRAT2:
+				if v.Message.GetImageMessage() != nil {
+					fmt.Println("IMAGE EXISTS")
+					imageMessage := v.Message.GetImageMessage()
+					imageData, err := wm.Client.Download(imageMessage)
+					if err != nil {
+						fmt.Println("ERROR DOWNLOAD IMAGE")
+						return
+					}
+					imageMIMEType := imageMessage.GetMimetype()
+					fmt.Printf("IMAGE MIMETYPE: %s \n", imageMIMEType)
+
+					// permissions := 0644 // or whatever you need
+					// byteArray := []byte("to be written to a file\n")
+					imageName := uuid.New().String()
+					err = os.WriteFile(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]), imageData, fs.ModePerm)
+					if err != nil {
+						fmt.Println("ERROR WRITE FILE")
+						fmt.Println(err.Error())
+					}
+
+					file, err := os.Open(fmt.Sprintf("./static/qr-codes/%s-image.%s", imageName, strings.Split(imageMIMEType, "/")[1]))
+					if err != nil {
+						fmt.Println("ERROR OPEN IMAGE")
+						fmt.Println(err)
+					}
+
+					img, _, err := image.Decode(file)
+					if err != nil {
+						fmt.Println("ERROR DECODE IMAGE")
+						fmt.Println(err)
+					}
+
+					// prepare BinaryBitmap
+					bmp, err := gozxing.NewBinaryBitmapFromImage(img)
+					if err != nil {
+						fmt.Println("ERROR gozxing bitmap IMAGE")
+						fmt.Println(err)
+					}
+
+					// update state to default
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+
+					// decode image
+					qrReader := gozqrcode.NewQRCodeReader()
+					qrDecodeResult, err := qrReader.Decode(bmp, nil)
+					if err != nil {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String("QR Code tidak valid"),
+						})
+						return
+					}
+					fmt.Println("QR CODE DECODE RESULT")
+					fmt.Println(qrDecodeResult.GetText())
+
+					// TEST
+					testUserId := strings.TrimSpace(qrDecodeResult.GetText())
+
+					var currentIdx int
+					currentIdxString, _ := wm.redisCache.Get(context.Background(), GetCurrentIndex).Result()
+					if currentIdxString == "" {
+						currentIdx = 0
+					} else {
+						currentIdx, _ = strconv.Atoi(currentIdxString)
+						currentIdx++
+					}
+
+					videoListString, _ := wm.redisCache.Get(context.Background(), GetCurrentVideoList).Result()
+					if videoListString == "" {
+						videoListString = strings.Join([]string{"https://api.kramili.site/static/3.mp4", "https://api.kramili.site/static/5.mp4"}, StringSeparator)
+					}
+					videoList := strings.Split(videoListString, ",")
+
+					if testUserId == "a180b098-8568-4ec3-9822-48a313b83047" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/1.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/1.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Agus",
+								PeopleCount:         1,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					if testUserId == "484d20a6-8097-447a-bf4f-fbdef7db6eca" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/2.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/2.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Ahmad",
+								PeopleCount:         2,
+								IsVideoReminderSent: false,
+							},
+						}
+					}
+					if testUserId == "7e4a645b-341e-420a-81b3-f38f85629ff8" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/4.mp4"
+
+						// videoList = append(videoList, "https://api.kramili.site/static/4.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Ibu Dewi",
+								PeopleCount:         3,
+								IsVideoReminderSent: false,
+							},
+						}
+					}
+					if testUserId == "0c467423-e324-4786-a9d9-0c77eb267407" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/6.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/6.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Ridwan",
+								PeopleCount:         4,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					if testUserId == "69fee15d-2c45-48ea-982e-4ce6327298fc" {
+						videoList = append(videoList[:currentIdx+1], videoList[currentIdx:]...)
+						videoList[currentIdx] = "https://api.kramili.site/static/7.mp4"
+						// videoList = append(videoList, "https://api.kramili.site/static/7.mp4")
+
+						invitationCompleteData = &store.InvitationCompleteData{
+							User: store.InvitationUserData{
+								Name:                "Bapak Yoga",
+								PeopleCount:         5,
+								IsVideoReminderSent: true,
+							},
+						}
+					}
+					wm.redisCache.Set(context.Background(), GetCurrentVideoList, strings.Join(videoList, ","), DefaultCacheTimeVideo)
+
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", qrDecodeResult.GetText())),
+					})
+
+					currentAdmin2ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin2).Result()
+					if currentAdmin2ListString == "" {
+						currentAdmin2ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+					}
+
+					currentAdmin2List := strings.Split(currentAdmin2ListString, ",")
+
+					textForAdmin := `Konfirmasi Kehadiran Berhasil!
+
+Berikut data tamu undangan:
+Nama: 							%s
+Jumlah Konfirmasi Kehadiran: 	%d
+VIP: 							%s`
+					for _, admin2 := range currentAdmin2List {
+						wm.SendMessage(context.Background(), admin2, &waProto.Message{
+							Conversation: proto.String(fmt.Sprintf(textForAdmin,
+								invitationCompleteData.User.Name,
+								invitationCompleteData.User.PeopleCount,
+								strconv.FormatBool(invitationCompleteData.User.IsVideoReminderSent))),
+						})
+					}
+
+					return
+
+					// TODO: update attendance, link video
+					// invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), qrDecodeResult.GetText())
+					// if err != nil {
+					// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 		Conversation: proto.String("QR Code tidak valid. Info pengguna tidak ditemukan"),
+					// 	})
+					// 	return
+					// }
+
+					// wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 	Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", invitationCompleteData.User.Name)),
+					// })
+					// return
+				} else if v.Message.GetConversation() == "0" {
+					wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, "", DefaultCacheTime)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Pengiriman code QR dibatalkan"),
+					})
+					return
+				} else {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Mohon kirimkan code QR anda. Tekan 0 jika anda ingin membatalkan"),
+					})
+					return
+				}
+
 			case StateChangeRSPV:
 				var changeRSVPValid bool
 				var newPeopleCount int
@@ -466,29 +858,111 @@ Afra - Akram 🌹`
 
 				return
 			case "AT 1":
-				var currentIdx int
-				currentIdxString, _ := wm.redisCache.Get(context.Background(), GetCurrentIndex).Result()
-				if currentIdxString == "" {
-					currentIdx = 0
-				} else {
-					currentIdx, _ = strconv.Atoi(currentIdxString)
-					currentIdx++
-				}
+				senderWaNumber := "+" + strings.Split(v.Info.Sender.ToNonAD().String(), "@")[0]
 
 				currentAdmin1ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin1).Result()
 				if currentAdmin1ListString == "" {
 					currentAdmin1ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
 				}
-				currentAdminList := strings.Split(currentAdmin1ListString, ",")
+				currentAdmin1List := strings.Split(currentAdmin1ListString, ",")
 
-				wm.redisCache.Set(context.Background(), GetCurrentAdmin1, strings.Join(currentAdminList, ","), DefaultCacheTimeVideo)
+				notRegistered := true
+				for _, admin := range currentAdmin1List {
+					if senderWaNumber == admin {
+						notRegistered = false
+						break
+					}
+				}
+				if notRegistered {
+					currentAdmin1List = append(currentAdmin1List, senderWaNumber)
+				}
+
+				wm.redisCache.Set(context.Background(), GetCurrentAdmin1, strings.Join(currentAdmin1List, ","), DefaultCacheTimeAdmin)
 
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 1, %s", v.Info.Sender.ToNonAD())),
+					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 1, %s", strings.Join(currentAdmin1List, ","))),
 				})
 
 				return
 
+			case "AT 2":
+				senderWaNumber := "+" + strings.Split(v.Info.Sender.ToNonAD().String(), "@")[0]
+
+				currentAdmin2ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin2).Result()
+				if currentAdmin2ListString == "" {
+					currentAdmin2ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+				}
+				currentAdmin2List := strings.Split(currentAdmin2ListString, ",")
+
+				notRegistered := true
+				for _, admin := range currentAdmin2List {
+					if senderWaNumber == admin {
+						notRegistered = false
+						break
+					}
+				}
+				if notRegistered {
+					currentAdmin2List = append(currentAdmin2List, senderWaNumber)
+				}
+
+				wm.redisCache.Set(context.Background(), GetCurrentAdmin2, strings.Join(currentAdmin2List, ","), DefaultCacheTimeAdmin)
+
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 2, %s", strings.Join(currentAdmin2List, ","))),
+				})
+
+				return
+
+			case "NAT":
+				senderWaNumber := "+" + strings.Split(v.Info.Sender.ToNonAD().String(), "@")[0]
+
+				currentAdmin1ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin1).Result()
+				if currentAdmin1ListString == "" {
+					currentAdmin1ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+				}
+
+				currentAdmin1List := strings.Split(currentAdmin1ListString, ",")
+				currentAdmin2ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin2).Result()
+				if currentAdmin2ListString == "" {
+					currentAdmin2ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+				}
+				currentAdmin2List := strings.Split(currentAdmin2ListString, ",")
+
+				newCurrentAdmin1List := []string{}
+				for idx, admin1 := range currentAdmin1List {
+					if senderWaNumber == admin1 {
+						newCurrentAdmin1List = append(currentAdmin1List[:idx], currentAdmin1List[idx+1:]...)
+						wm.redisCache.Set(context.Background(), GetCurrentAdmin1, strings.Join(newCurrentAdmin1List, ","), DefaultCacheTimeAdmin)
+						break
+					}
+				}
+
+				newCurrentAdmin2List := []string{}
+				for idx, admin2 := range currentAdmin2List {
+					if senderWaNumber == admin2 {
+						newCurrentAdmin2List = append(currentAdmin2List[:idx], currentAdmin2List[idx+1:]...)
+						wm.redisCache.Set(context.Background(), GetCurrentAdmin2, strings.Join(newCurrentAdmin2List, ","), DefaultCacheTimeAdmin)
+						break
+					}
+				}
+
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(fmt.Sprintf("Anda sudah tidak terdaftar sebagai AT")),
+				})
+				return
+
+			case "Konfirmasi QR 1":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateQRAT1, DefaultCacheTime)
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String("Silakan kirimkan QR code anda"),
+				})
+				return
+			case "Konfirmasi QR 2":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateQRAT2, DefaultCacheTime)
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String("Silakan kirimkan QR code anda"),
+				})
+				return
 			}
 
 			replyMessage := `Pesan anda tidak dikenali
