@@ -10,6 +10,7 @@ import (
 type ValidateUserQRRsvpResponse struct {
 	Name        string `json:"name"`
 	PeopleCount int    `json:"people_count"`
+	VIP         bool   `json:"vip"`
 }
 
 func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +21,7 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 		resp := ValidateUserQRRsvpResponse{
 			Name:        "Bapak Ari",
 			PeopleCount: 2,
+			VIP:         true,
 		}
 
 		response.Respond(w, http.StatusOK, resp)
@@ -30,6 +32,7 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 		resp := ValidateUserQRRsvpResponse{
 			Name:        "Bapak Lukman",
 			PeopleCount: 10,
+			VIP:         false,
 		}
 
 		response.Respond(w, http.StatusOK, resp)
@@ -39,6 +42,7 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 	resp := ValidateUserQRRsvpResponse{
 		Name:        "Tamu Tidak Diundang",
 		PeopleCount: -99999,
+		VIP:         false,
 	}
 
 	response.Respond(w, http.StatusOK, resp)
