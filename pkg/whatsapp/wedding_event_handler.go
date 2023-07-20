@@ -36,7 +36,7 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 	switch v := evt.(type) {
 	case *events.Message:
 		if !v.Info.IsFromMe {
-			fmt.Println("PESAN DITERIMA!", v.Message.GetConversation())
+			fmt.Println("MESSAGE RECEIVED!", v.Message.GetConversation())
 			userJID := v.Info.Sender.ToNonAD().String()
 
 			fmt.Printf("USER JID: %s \n", userJID)
@@ -297,8 +297,8 @@ Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationComp
 			case "1":
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
 				replyMessage := `Anda akan mengubah jumlah kehadiran
-				
-Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
+
+			Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String(replyMessage),
 				})
@@ -306,10 +306,10 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 			case "2":
 				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
 
-*Nama*			: %s
-*Jumlah Orang*	: %d
+			*Nama*			: %s
+			*Jumlah Orang*	: %d
 
-*Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
+			*Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String(replyMessage),
 				})
@@ -348,6 +348,39 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String("Daftar video telah berhasil dihapus"),
 				})
+				return
+			case "Broadcast":
+				if wm.Config.BroadcastMode {
+					waNumber := "+6282214225921"
+					// waNumber := "+628121552492"
+					firstMessage := `Assalamu'alaikum warahmatullahi wabarakatuh 
+
+Perkenalkan kami Afra Izzati Kamili dan  Muhammad Akram Al Bari. Semoga Bapak/ Ibu telah menerima undangan pernikahan kami.
+
+*Tanpa mengurangi rasa hormat, kami tidak menerima karangan bunga secara fisik*. Namun, kami sangat menantikan ucapan selamat dan do'a, berupa foto atau video yang insya Allah, akan ditampilkan pada hari pernikahan. 
+
+Berikut kami lampirkan contoh foto dan video yang dimaksud`
+					wm.SendMessage(context.Background(), waNumber, &waProto.Message{
+						Conversation: proto.String(firstMessage),
+					})
+					wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-1.png", "")
+					wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-2.png", "")
+					// VIDEO MESSAGE
+					wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-1.mp4", "")
+					wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-2.mp4", "")
+					secondMessage := `*Pengiriman foto dan/atau video dapat melalui nomor WhatsApp ini* dengan format jpg/png/pdf/mkv/mp4/mov
+
+Terima kasih atas perhatian, pengertian, dan do'anya.
+Jazaakumullahu khairan katsiraa.
+
+Wassalamu'alaikum warahmatullahi wabarakatuh
+
+		Afra - Akram 🌹`
+					wm.SendMessage(context.Background(), waNumber, &waProto.Message{
+						Conversation: proto.String(secondMessage),
+					})
+				}
+
 				return
 			}
 

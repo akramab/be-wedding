@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.mau.fi/whatsmeow"
@@ -19,11 +20,13 @@ import (
 
 type Config struct {
 	EnableNotification bool `toml:"enable_notification"`
+	BroadcastMode      bool `toml:"broadcast_mode"`
 }
 
 type Client interface {
 	SendMessage(ctx context.Context, recipientNumber string, message *waProto.Message) error
 	SendImageMessage(ctx context.Context, recipientNumber string, imageFileName string, captionImageMessage string) error
+	SendVideoMessage(ctx context.Context, recipientNumber string, videoFileName string, captionVideoMessage string) error
 }
 
 func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore store.Invitation, redisCache redis.Client) (Client, error) {
@@ -72,6 +75,7 @@ func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore stor
 			userStore:       userStore,
 			invitationStore: invitationStore,
 			redisCache:      redisCache,
+			Config:          waCfg,
 		}
 		wm.Client.AddEventHandler(wm.eventHandler)
 
@@ -94,11 +98,16 @@ func (mock *waClientMock) SendImageMessage(ctx context.Context, recipientNumber 
 	return nil
 }
 
+func (mock *waClientMock) SendVideoMessage(ctx context.Context, recipientNumber string, videoFileName string, captionVideoMessage string) error {
+	return nil
+}
+
 type whatsMeow struct {
 	Client          *whatsmeow.Client
 	userStore       store.User
 	invitationStore store.Invitation
 	redisCache      redis.Client
+	Config          Config
 }
 
 type whatsMeowEventHandler struct {
@@ -132,9 +141,81 @@ func (wm *whatsMeow) SendImageMessage(ctx context.Context, recipientNumber strin
 		return err
 	}
 
-	imageMsg := &waProto.ImageMessage{
-		Caption:  proto.String(captionImageMessage),
-		Mimetype: proto.String("image/png"), // replace this with the actual mime type
+	var imageMsg *waProto.ImageMessage
+	if !wm.Config.BroadcastMode {
+		imageMsg = &waProto.ImageMessage{
+			Caption:  proto.String(captionImageMessage),
+			Mimetype: proto.String("image/png"), // replace this with the actual mime type
+			// you can also optionally add other fields like ContextInfo and JpegThumbnail here
+
+			Url:           &resp.URL,
+			DirectPath:    &resp.DirectPath,
+			MediaKey:      resp.MediaKey,
+			FileEncSha256: resp.FileEncSHA256,
+			FileSha256:    resp.FileSHA256,
+			FileLength:    &resp.FileLength,
+		}
+	} else {
+		thumbnailBytes, err := os.ReadFile(fmt.Sprintf("./static/qr-codes/%s", strings.Split(imageFileName, ".")[0]+"-thumbnail.png"))
+		respThumbnail, err := wm.Client.Upload(context.Background(), thumbnailBytes, whatsmeow.MediaImage)
+		if err != nil {
+			fmt.Println("ERROR UPLOAD IMAGE")
+			return err
+		}
+
+		imageMsg = &waProto.ImageMessage{
+			Caption:  proto.String(captionImageMessage),
+			Mimetype: proto.String("image/png"), // replace this with the actual mime type
+			// you can also optionally add other fields like ContextInfo and JpegThumbnail here
+			ThumbnailDirectPath: &respThumbnail.DirectPath,
+			ThumbnailSha256:     respThumbnail.FileSHA256,
+			ThumbnailEncSha256:  respThumbnail.FileEncSHA256,
+			JpegThumbnail:       thumbnailBytes,
+
+			Url:           &resp.URL,
+			DirectPath:    &resp.DirectPath,
+			MediaKey:      resp.MediaKey,
+			FileEncSha256: resp.FileEncSHA256,
+			FileSha256:    resp.FileSHA256,
+			FileLength:    &resp.FileLength,
+		}
+	}
+
+	// Remove '+' sign from the target recipient number
+	recipientNumberCleaned := recipientNumber[1:]
+
+	recipient := types.NewJID(recipientNumberCleaned, "s.whatsapp.net")
+
+	_, err = wm.Client.SendMessage(context.Background(), recipient, &waProto.Message{
+		ImageMessage: imageMsg,
+	})
+
+	if err != nil {
+		fmt.Println("SEND IMAGE ERROR")
+		fmt.Println(err.Error())
+		return err
+	}
+
+	return err
+}
+
+func (wm *whatsMeow) SendVideoMessage(ctx context.Context, recipientNumber string, videoFileName string, captionVideoMessage string) error {
+	imageBytes, err := os.ReadFile(fmt.Sprintf("./static/qr-codes/%s", videoFileName)) // still need to change the mimetype
+	if err != nil {
+		fmt.Println("ERROR read video file")
+		fmt.Println(err.Error())
+		return err
+	}
+
+	resp, err := wm.Client.Upload(context.Background(), imageBytes, whatsmeow.MediaVideo)
+	if err != nil {
+		fmt.Println("ERROR UPLOAD VIDEO")
+		return err
+	}
+
+	videoMsg := &waProto.VideoMessage{
+		Caption:  proto.String(captionVideoMessage),
+		Mimetype: proto.String("video/mp4"), // replace this with the actual mime type
 		// you can also optionally add other fields like ContextInfo and JpegThumbnail here
 
 		Url:           &resp.URL,
@@ -151,11 +232,11 @@ func (wm *whatsMeow) SendImageMessage(ctx context.Context, recipientNumber strin
 	recipient := types.NewJID(recipientNumberCleaned, "s.whatsapp.net")
 
 	_, err = wm.Client.SendMessage(context.Background(), recipient, &waProto.Message{
-		ImageMessage: imageMsg,
+		VideoMessage: videoMsg,
 	})
 
 	if err != nil {
-		fmt.Println("SEND IMAGE ERROR")
+		fmt.Println("SEND Video ERROR")
 		fmt.Println(err.Error())
 		return err
 	}
