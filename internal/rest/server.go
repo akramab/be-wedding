@@ -76,6 +76,7 @@ func New(
 		r.Get("/{id}/qr-code/download", userHandler.DownloadQRCode)
 
 		r.Get("/current-video", userHandler.GetCurrentVideo)
+		r.Get("/qr-rsvp/{invitation_code}", userHandler.ValidateUserQRRsvp)
 	})
 
 	r.Route("/auth", func(r chi.Router) {
