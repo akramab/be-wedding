@@ -354,9 +354,15 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				if wm.Config.BroadcastMode {
 					waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
 					if err != nil {
-						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						log.Println("Access Database Error")
+						log.Println(err.Error())
+						_ ,err = wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 							Conversation: proto.String("Broadcast error. Can't get WhatsApp Number List."),
 						})
+						if err != nil {
+							log.Println("SEND MESSAGE ERROR")
+							log.Println(err.Error())
+						}
 						return
 					}
 
