@@ -367,7 +367,7 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 					// 	"+6282214225921",
 					// }
 					for idx, waNumber := range waNumberList {
-						if idx > 3 {
+						if idx > 16 {
 							firstMessage := `Assalamu'alaikum warahmatullahi wabarakatuh 
 
 Perkenalkan kami Afra Izzati Kamili dan  Muhammad Akram Al Bari. Semoga Bapak/ Ibu telah menerima undangan pernikahan kami.
@@ -394,6 +394,7 @@ Afra - Akram 🌹`
 							wm.SendMessage(context.Background(), waNumber, &waProto.Message{
 								Conversation: proto.String(secondMessage),
 							})
+							time.Sleep(time.Second * time.Duration(5))
 						}
 
 					}
