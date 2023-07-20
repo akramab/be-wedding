@@ -554,3 +554,31 @@ func (s *User) UpdateRSVPByUserID(ctx context.Context, userRSVP *store.UserRSVPD
 
 	return nil
 }
+
+const userFindAllWhatsAppNumberQuery = `SELECT u.wa_number 
+FROM users u
+`
+
+func (s *User) FindAllWhatsAppNumber(ctx context.Context) ([]string, error) {
+	waNumberList := []string{}
+
+	rows, err := s.db.QueryContext(ctx, userFindAllWhatsAppNumberQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var waNumber string
+
+		err := rows.Scan(
+			&waNumber,
+		)
+		if err != nil {
+			return nil, err
+		}
+		waNumberList = append(waNumberList, waNumber)
+	}
+
+	return waNumberList, nil
+}

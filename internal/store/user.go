@@ -68,4 +68,5 @@ type User interface {
 	FindOneCommentByUserID(ctx context.Context, userID string) (*UserCommentData, error)
 	InsertUserRSVP(ctx context.Context, userRSVP *UserRSVPData) error
 	UpdateRSVPByUserID(ctx context.Context, userRSVP *UserRSVPData) error
+	FindAllWhatsAppNumber(ctx context.Context) ([]string, error)
 }
