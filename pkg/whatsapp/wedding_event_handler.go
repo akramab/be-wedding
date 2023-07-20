@@ -351,15 +351,20 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 				return
 			case "Broadcast Reminder Ucapan wpVZD":
 				if wm.Config.BroadcastMode {
-					waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
-					if err != nil {
-						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-							Conversation: proto.String("Broadcast error. Can't get WhatsApp Number List."),
-						})
-						return
-					}
+					// waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
+					// if err != nil {
+					// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 		Conversation: proto.String("Broadcast error. Can't get WhatsApp Number List."),
+					// 	})
+					// 	return
+					// }
 					// waNumber := "+6282214225921"
 					// waNumber := "+628121552492"
+					// TEST
+					waNumberList := []string{
+						"+628121552492",
+						"+6282214225921",
+					}
 					for _, waNumber := range waNumberList {
 						firstMessage := `Assalamu'alaikum warahmatullahi wabarakatuh 
 
@@ -383,7 +388,7 @@ Jazaakumullahu khairan katsiraa.
 						
 Wassalamu'alaikum warahmatullahi wabarakatuh
 						
-		Afra - Akram 🌹`
+Afra - Akram 🌹`
 						wm.SendMessage(context.Background(), waNumber, &waProto.Message{
 							Conversation: proto.String(secondMessage),
 						})
