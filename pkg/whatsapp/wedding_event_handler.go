@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"io/fs"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -375,14 +376,39 @@ Perkenalkan kami Afra Izzati Kamili dan  Muhammad Akram Al Bari. Semoga Bapak/ I
 *Tanpa mengurangi rasa hormat, kami tidak menerima karangan bunga secara fisik*. Namun, kami sangat menantikan ucapan selamat dan do'a, berupa foto atau video yang insya Allah, akan ditampilkan pada hari pernikahan. 
 													
 Berikut kami lampirkan contoh foto dan video yang dimaksud`
-							wm.SendMessage(context.Background(), waNumber, &waProto.Message{
+							err := wm.SendMessage(context.Background(), waNumber, &waProto.Message{
 								Conversation: proto.String(firstMessage),
 							})
-							wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-1.png", "")
-							wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-2.png", "")
+							if err != nil {
+								log.Println("ERROR SEND FIRST MESSAGE")
+								log.Println(err.Error())
+								return
+							}
+							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-1.png", "")
+							if err != nil {
+								log.Println("ERROR SEND IMAGE 1")
+								log.Println(err.Error())
+								return
+							}
+							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-2.png", "")
+							if err != nil {
+								log.Println("ERROR SEND IMAGE 2")
+								log.Println(err.Error())
+								return
+							}
 							// VIDEO MESSAGE
-							wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-1.mp4", "")
-							wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-2.mp4", "")
+							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-1.mp4", "")
+							if err != nil {
+								log.Println("ERROR SEND VIDEO 1")
+								log.Println(err.Error())
+								return
+							}
+							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-2.mp4", "")
+							if err != nil {
+								log.Println("ERROR SEND VIDEO 2")
+								log.Println(err.Error())
+								return
+							}
 							secondMessage := `*Pengiriman foto dan/atau video dapat melalui nomor WhatsApp ini* dengan format jpg/png/pdf/mkv/mp4/mov
 													
 Terima kasih atas perhatian, pengertian, dan do'anya.
@@ -391,9 +417,13 @@ Jazaakumullahu khairan katsiraa.
 Wassalamu'alaikum warahmatullahi wabarakatuh
 													
 Afra - Akram 🌹`
-							wm.SendMessage(context.Background(), waNumber, &waProto.Message{
+							err = wm.SendMessage(context.Background(), waNumber, &waProto.Message{
 								Conversation: proto.String(secondMessage),
 							})
+							if err != nil {
+								log.Println("ERROR SEND SECOND MESSAGE")
+								log.Println(err.Error())
+							}
 							time.Sleep(time.Second * time.Duration(5))
 						}
 
