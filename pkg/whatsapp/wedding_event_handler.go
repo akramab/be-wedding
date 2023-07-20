@@ -31,6 +31,9 @@ const (
 	GetCurrentVideoList = "CURRENT_VIDE_LIST"
 	GetCurrentIndex     = "CURRENT_INDEX"
 	StringSeparator     = ","
+
+	GetCurrentAdmin1 = "CURRENT_ADMIN_1"
+	GetCurrentAdmin2 = "CURRENT_ADMIN_2"
 )
 
 func (wm *whatsMeow) eventHandler(evt interface{}) {
@@ -43,10 +46,34 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 			fmt.Printf("USER JID: %s \n", userJID)
 			invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), "+"+strings.Split(userJID, "@")[0])
 			if err != nil {
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Maaf, nomor anda belum terdaftar. Silahkan registrasi melalui undangan yang telah dikirimkan")),
-				})
-				return
+				if !wm.Config.DebugMode {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Maaf, nomor anda belum terdaftar. Silahkan registrasi melalui undangan yang telah dikirimkan")),
+					})
+					return
+				} else {
+					invitationCompleteData = &store.InvitationCompleteData{
+						Invitation: store.InvitationData{
+							ID:       "test-id",
+							Type:     "SINGLE",
+							Name:     "test-invitation",
+							Status:   store.InvitationStatusAvailable,
+							Session:  1,
+							Schedule: "09.00-10.00",
+						},
+						User: store.InvitationUserData{
+							ID:                  "test-id",
+							Name:                "Test User",
+							WhatsAppNumber:      "+6285157017311",
+							PeopleCount:         1,
+							Status:              store.UserStatusInfoCompleted,
+							QRImage:             "test-qr-image.png",
+							IsVideoReminderSent: true,
+							IsDateReminderSent:  true,
+						},
+					}
+				}
+
 			}
 
 			userState, err := wm.redisCache.Get(context.Background(), invitationCompleteData.User.ID).Result()
@@ -356,7 +383,7 @@ Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
 					if err != nil {
 						log.Println("Access Database Error")
 						log.Println(err.Error())
-						_ ,err = wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						_, err = wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 							Conversation: proto.String("Broadcast error. Can't get WhatsApp Number List."),
 						})
 						if err != nil {
@@ -390,46 +417,46 @@ Berikut kami lampirkan contoh foto dan video yang dimaksud`
 								log.Println(err.Error())
 								return
 							}
-// 							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-1.png", "")
-// 							if err != nil {
-// 								log.Println("ERROR SEND IMAGE 1")
-// 								log.Println(err.Error())
-// 								return
-// 							}
-// 							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-2.png", "")
-// 							if err != nil {
-// 								log.Println("ERROR SEND IMAGE 2")
-// 								log.Println(err.Error())
-// 								return
-// 							}
-// 							// VIDEO MESSAGE
-// 							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-1.mp4", "")
-// 							if err != nil {
-// 								log.Println("ERROR SEND VIDEO 1")
-// 								log.Println(err.Error())
-// 								return
-// 							}
-// 							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-2.mp4", "")
-// 							if err != nil {
-// 								log.Println("ERROR SEND VIDEO 2")
-// 								log.Println(err.Error())
-// 								return
-// 							}
-// 							secondMessage := `*Pengiriman foto dan/atau video dapat melalui nomor WhatsApp ini* dengan format jpg/png/pdf/mkv/mp4/mov
+							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-1.png", "")
+							if err != nil {
+								log.Println("ERROR SEND IMAGE 1")
+								log.Println(err.Error())
+								return
+							}
+							err = wm.SendImageMessage(context.Background(), waNumber, "contoh-foto-2.png", "")
+							if err != nil {
+								log.Println("ERROR SEND IMAGE 2")
+								log.Println(err.Error())
+								return
+							}
+							// VIDEO MESSAGE
+							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-1.mp4", "")
+							if err != nil {
+								log.Println("ERROR SEND VIDEO 1")
+								log.Println(err.Error())
+								return
+							}
+							err = wm.SendVideoMessage(context.Background(), waNumber, "contoh-video-2.mp4", "")
+							if err != nil {
+								log.Println("ERROR SEND VIDEO 2")
+								log.Println(err.Error())
+								return
+							}
+							secondMessage := `*Pengiriman foto dan/atau video dapat melalui nomor WhatsApp ini* dengan format jpg/png/pdf/mkv/mp4/mov
 													
-// Terima kasih atas perhatian, pengertian, dan do'anya.
-// Jazaakumullahu khairan katsiraa.
+Terima kasih atas perhatian, pengertian, dan do'anya.
+Jazaakumullahu khairan katsiraa.
 													
-// Wassalamu'alaikum warahmatullahi wabarakatuh
+Wassalamu'alaikum warahmatullahi wabarakatuh
 													
-// Afra - Akram 🌹`
-							// err = wm.SendMessage(context.Background(), waNumber, &waProto.Message{
-							// 	Conversation: proto.String(secondMessage),
-							// })
-							// if err != nil {
-							// 	log.Println("ERROR SEND SECOND MESSAGE")
-							// 	log.Println(err.Error())
-							// }
+Afra - Akram 🌹`
+							err = wm.SendMessage(context.Background(), waNumber, &waProto.Message{
+								Conversation: proto.String(secondMessage),
+							})
+							if err != nil {
+								log.Println("ERROR SEND SECOND MESSAGE")
+								log.Println(err.Error())
+							}
 							time.Sleep(time.Second * time.Duration(5))
 						}
 
@@ -438,6 +465,30 @@ Berikut kami lampirkan contoh foto dan video yang dimaksud`
 				}
 
 				return
+			case "AT 1":
+				var currentIdx int
+				currentIdxString, _ := wm.redisCache.Get(context.Background(), GetCurrentIndex).Result()
+				if currentIdxString == "" {
+					currentIdx = 0
+				} else {
+					currentIdx, _ = strconv.Atoi(currentIdxString)
+					currentIdx++
+				}
+
+				currentAdmin1ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin1).Result()
+				if currentAdmin1ListString == "" {
+					currentAdmin1ListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
+				}
+				currentAdminList := strings.Split(currentAdmin1ListString, ",")
+
+				wm.redisCache.Set(context.Background(), GetCurrentAdmin1, strings.Join(currentAdminList, ","), DefaultCacheTimeVideo)
+
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 1, %s", v.Info.Sender.ToNonAD())),
+				})
+
+				return
+
 			}
 
 			replyMessage := `Pesan anda tidak dikenali

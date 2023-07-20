@@ -21,6 +21,7 @@ import (
 type Config struct {
 	EnableNotification bool `toml:"enable_notification"`
 	BroadcastMode      bool `toml:"broadcast_mode"`
+	DebugMode          bool `toml:"debug_mode"`
 }
 
 type Client interface {
