@@ -882,7 +882,7 @@ Afra - Akram 🌹`
 				wm.redisCache.Set(context.Background(), GetCurrentAdmin1, strings.Join(currentAdmin1List, ","), DefaultCacheTimeAdmin)
 
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 1, %s", strings.Join(currentAdmin1List, ","))),
+					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 1")),
 				})
 
 				return
@@ -910,7 +910,7 @@ Afra - Akram 🌹`
 				wm.redisCache.Set(context.Background(), GetCurrentAdmin2, strings.Join(currentAdmin2List, ","), DefaultCacheTimeAdmin)
 
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 2, %s", strings.Join(currentAdmin2List, ","))),
+					Conversation: proto.String(fmt.Sprintf("Anda sudah terdaftar menjadi bagian dari AT 2")),
 				})
 
 				return

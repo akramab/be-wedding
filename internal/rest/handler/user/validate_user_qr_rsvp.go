@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -82,7 +83,7 @@ VIP: %s`
 			Conversation: proto.String(fmt.Sprintf(textForAdmin,
 				resp.Name,
 				resp.PeopleCount,
-				resp.VIP,
+				strconv.FormatBool(resp.VIP),
 			)),
 		})
 	}
