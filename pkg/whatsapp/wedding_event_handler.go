@@ -439,10 +439,11 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 
 					textForAdmin := `Konfirmasi Kehadiran Berhasil!
 
-Berikut data tamu undangan:
-Nama: 							%s
-Jumlah Konfirmasi Kehadiran: 	%d
-VIP: 							%s`
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+VIP: %s`
 					for _, admin1 := range currentAdmin1List {
 						wm.SendMessage(context.Background(), admin1, &waProto.Message{
 							Conversation: proto.String(fmt.Sprintf(textForAdmin,
@@ -633,10 +634,11 @@ VIP: 							%s`
 
 					textForAdmin := `Konfirmasi Kehadiran Berhasil!
 
-Berikut data tamu undangan:
-Nama: 							%s
-Jumlah Konfirmasi Kehadiran: 	%d
-VIP: 							%s`
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+VIP: %s`
 					for _, admin2 := range currentAdmin2List {
 						wm.SendMessage(context.Background(), admin2, &waProto.Message{
 							Conversation: proto.String(fmt.Sprintf(textForAdmin,
