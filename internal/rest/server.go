@@ -77,6 +77,7 @@ func New(
 
 		r.Get("/current-video", userHandler.GetCurrentVideo)
 		r.Get("/qr-rsvp/{invitation_code}", userHandler.ValidateUserQRRsvp)
+		r.Post("/synchronize-data", userHandler.SynchronizeUser)
 	})
 
 	r.Route("/auth", func(r chi.Router) {

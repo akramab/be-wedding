@@ -24,6 +24,7 @@ type UserHandler interface {
 	DownloadQRCode(w http.ResponseWriter, r *http.Request)
 	GetCurrentVideo(w http.ResponseWriter, r *http.Request)
 	ValidateUserQRRsvp(w http.ResponseWriter, r *http.Request)
+	SynchronizeUser(w http.ResponseWriter, r *http.Request)
 }
 
 type userHandler struct {

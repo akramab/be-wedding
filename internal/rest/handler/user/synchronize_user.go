@@ -1,10 +1,20 @@
 package user
 
 import (
+	apierror "be-wedding/internal/rest/error"
+	"be-wedding/internal/rest/response"
+	"be-wedding/internal/store"
 	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"image/color"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/fogleman/gg"
+	"github.com/google/uuid"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 type SynchronizeUserRequest struct {
@@ -18,8 +28,15 @@ type SyncronizeUserData struct {
 
 func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Request) {
 	// open file
+	ctx := r.Context()
 	req := SynchronizeUserRequest{}
-	f, err := os.Open(req.FileName)
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, apierror.BadRequestError(err.Error()))
+		return
+	}
+
+	f, err := os.Open("./static/" + req.FileName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,4 +65,66 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 		}
 		synchroUserDataList = append(synchroUserDataList, synchroUserData)
 	}
+
+	for _, synchroUser := range synchroUserDataList {
+		qrImageName := fmt.Sprintf("qr-%s.png", uuid.NewString())
+		newUserData := &store.UserData{
+			InvitationID:   "synchronize-data",
+			InvitationType: "GROUP",
+			WhatsAppNumber: synchroUser.WaNumber,
+			QRImageName:    qrImageName,
+		}
+
+		if err := handler.userStore.Insert(ctx, newUserData); err != nil {
+			log.Println("error insert new user data: %w", err)
+			response.Error(w, apierror.BadRequestError(fmt.Sprintf("phone number: %s already exists!", newUserData.WhatsAppNumber)))
+			return
+		}
+
+		userData := &store.UserData{
+			ID:   newUserData.ID,
+			Name: synchroUser.Name,
+		}
+
+		if err := handler.userStore.Update(ctx, userData); err != nil {
+			log.Println("error update new user data: %w", err)
+			response.Error(w, apierror.InternalServerError())
+			return
+		}
+
+		// CREATE QR
+		qrImageInitial := fmt.Sprintf("qr-%s.png", uuid.NewString())
+		initialFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageInitial)
+		finalFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageName)
+		err = qrcode.WriteColorFile(newUserData.ID, qrcode.Medium, 256, color.White, color.RGBA{110, 81, 59, 255}, initialFilePath)
+		if err != nil {
+			log.Println(err.Error())
+			response.Error(w, apierror.BadRequestError(err.Error()))
+			return
+		}
+
+		const S = 256
+		im, err := gg.LoadImage(initialFilePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		dc := gg.NewContext(S, S+20)
+		dc.SetRGB(1, 1, 1)
+		dc.Clear()
+		dc.SetRGB(0, 0, 0)
+		if err := dc.LoadFontFace("./static/fonts/Alice-Regular.ttf", 12); err != nil {
+			panic(err)
+		}
+
+		dc.DrawImage(im, 0, 20)
+		dc.DrawStringAnchored("Tiket reservasi pernikahan Afra & Akram", S/2, 10, 0.5, 0.5)
+		dc.DrawStringAnchored(fmt.Sprintf("untuk %s", newUserData.Name), S/2, 20, 0.5, 0.5)
+
+		dc.Clip()
+		dc.SavePNG(finalFilePath)
+	}
+
+	log.Println("DEBUG")
+	log.Println(synchroUserDataList)
 }
