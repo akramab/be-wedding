@@ -38,8 +38,8 @@ auth = false
 
 [whatsapp]
 enable_notification = true
-broadcast_mode = true
-debug_mode = true
+broadcast_mode = false
+debug_mode = false
 
 [redis]
 enable_cache = true
