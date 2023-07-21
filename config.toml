@@ -40,6 +40,7 @@ auth = false
 enable_notification = true
 broadcast_mode = false
 debug_mode = false
+auto_reply = false
 
 [redis]
 enable_cache = true

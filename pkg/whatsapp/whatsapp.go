@@ -22,6 +22,7 @@ type Config struct {
 	EnableNotification bool `toml:"enable_notification"`
 	BroadcastMode      bool `toml:"broadcast_mode"`
 	DebugMode          bool `toml:"debug_mode"`
+	AutoReply          bool `toml:"auto_reply"`
 }
 
 type Client interface {
@@ -78,7 +79,10 @@ func NewWhatsMeowClient(waCfg Config, userStore store.User, invitationStore stor
 			redisCache:      redisCache,
 			Config:          waCfg,
 		}
-		wm.Client.AddEventHandler(wm.eventHandler)
+
+		if wm.Config.AutoReply {
+			wm.Client.AddEventHandler(wm.eventHandler)
+		}
 
 		return wm, nil
 		// return &whatsMeow{
