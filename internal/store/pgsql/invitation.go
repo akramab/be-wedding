@@ -91,7 +91,7 @@ func (s *Invitation) FindOneByID(ctx context.Context, id string) (*store.Invitat
 	return invitation, nil
 }
 
-const invitationFindOneCompleteDataByIDQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE)
+const invitationFindOneCompleteDataByIDQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE), COALESCE(u.is_vip, FALSE), COALESCE(u.is_vvip, FALSE)
 		FROM invitations i
 		LEFT JOIN invitation_sessions invs
 		ON i.session_id = invs.id
@@ -113,6 +113,7 @@ func (s *Invitation) FindOneCompleteDataByID(ctx context.Context, id string) (*s
 		&invitation.Invitation.Name, &invitation.Invitation.Status, &invitation.Invitation.Schedule,
 		&invitation.User.ID, &invitation.User.Name, &invitation.User.WhatsAppNumber, &invitation.User.Status,
 		&invitation.User.QRImage, &invitation.User.PeopleCount, &invitation.User.IsDateReminderSent, &invitation.User.IsVideoReminderSent,
+		&invitation.User.IsVIP, &invitation.User.IsVVIP,
 	)
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (s *Invitation) FindOneCompleteDataByID(ctx context.Context, id string) (*s
 	return invitation, nil
 }
 
-const invitationFindOneCompleteDataByUserIDQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE)
+const invitationFindOneCompleteDataByUserIDQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE), COALESCE(u.is_vip, FALSE), COALESCE(u.is_vvip, FALSE)
 		FROM invitations i
 		LEFT JOIN invitation_sessions invs
 		ON i.session_id = invs.id
@@ -143,6 +144,7 @@ func (s *Invitation) FindOneCompleteDataByUserID(ctx context.Context, id string)
 		&invitation.Invitation.Name, &invitation.Invitation.Status, &invitation.Invitation.Schedule,
 		&invitation.User.ID, &invitation.User.Name, &invitation.User.WhatsAppNumber, &invitation.User.Status,
 		&invitation.User.QRImage, &invitation.User.PeopleCount, &invitation.User.IsDateReminderSent, &invitation.User.IsVideoReminderSent,
+		&invitation.User.IsVIP, &invitation.User.IsVVIP,
 	)
 	if err != nil {
 		return nil, err
@@ -151,7 +153,7 @@ func (s *Invitation) FindOneCompleteDataByUserID(ctx context.Context, id string)
 	return invitation, nil
 }
 
-const invitationFindOneCompleteDataByWANumberQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE)
+const invitationFindOneCompleteDataByWANumberQuery = `SELECT i.id, i.type, i.name, i.status, invs.schedule, COALESCE(u.id, ''), COALESCE(u.name, ''), COALESCE(u.wa_number, ''), COALESCE(u.status, ''), COALESCE(u.qr_image, ''), COALESCE(ursvp.people_count, 0), COALESCE(u.is_date_reminder_sent, FALSE), COALESCE(u.is_video_reminder_sent, FALSE), COALESCE(u.is_vip, FALSE), COALESCE(u.is_vvip, FALSE)
 		FROM invitations i
 		LEFT JOIN invitation_sessions invs
 		ON i.session_id = invs.id
@@ -173,6 +175,7 @@ func (s *Invitation) FindOneCompleteDataByWANumber(ctx context.Context, waNumber
 		&invitation.Invitation.Name, &invitation.Invitation.Status, &invitation.Invitation.Schedule,
 		&invitation.User.ID, &invitation.User.Name, &invitation.User.WhatsAppNumber, &invitation.User.Status,
 		&invitation.User.QRImage, &invitation.User.PeopleCount, &invitation.User.IsDateReminderSent, &invitation.User.IsVideoReminderSent,
+		&invitation.User.IsVIP, &invitation.User.IsVVIP,
 	)
 	if err != nil {
 		return nil, err

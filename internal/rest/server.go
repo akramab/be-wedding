@@ -50,7 +50,7 @@ func New(
 	}
 
 	invitationHandler := invitationhandler.NewInvitationHandler(cfg.API, sqlDB, invitationStore)
-	userHandler := userhandler.NewUserHandler(cfg.API, sqlDB, userStore, invitationStore, whatsAppClient, redisCache)
+	userHandler := userhandler.NewUserHandler(cfg.API, cfg.WhatsApp, sqlDB, userStore, invitationStore, whatsAppClient, redisCache)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Afra & Akram Wedding Backend APIs"))

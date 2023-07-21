@@ -17,6 +17,7 @@ type ValidateUserQRRsvpResponse struct {
 	Name        string `json:"name"`
 	PeopleCount int    `json:"people_count"`
 	VIP         bool   `json:"vip"`
+	VVIP        bool   `json:"vvip"`
 }
 
 const (
@@ -49,25 +50,48 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 		adminList = strings.Split(adminListString, ",")
 	}
 
-	if invitationCode == "0c467423-e324-4786-a9d9-0c77eb267407" {
-		resp = ValidateUserQRRsvpResponse{
-			Name:        "Bapak Ari",
-			PeopleCount: 2,
-			VIP:         true,
+	if !handler.whatsAppCfg.DebugMode {
+		userData, err := handler.invitationStore.FindOneCompleteDataByUserID(ctx, invitationCode)
+		if err != nil {
+			resp = ValidateUserQRRsvpResponse{
+				Name:        "Tamu Tidak Diundang",
+				PeopleCount: -99999,
+				VIP:         false,
+				VVIP:        false,
+			}
 		}
-	}
 
-	if invitationCode == "69fee15d-2c45-48ea-982e-4ce6327298fc" {
 		resp = ValidateUserQRRsvpResponse{
-			Name:        "Bapak Lukman",
-			PeopleCount: 10,
-			VIP:         false,
+			Name:        userData.User.Name,
+			PeopleCount: int(userData.User.PeopleCount),
+			VIP:         userData.User.IsVIP,
+			VVIP:        userData.User.IsVVIP,
 		}
+
 	} else {
-		resp = ValidateUserQRRsvpResponse{
-			Name:        "Tamu Tidak Diundang",
-			PeopleCount: -99999,
-			VIP:         false,
+		if invitationCode == "0c467423-e324-4786-a9d9-0c77eb267407" {
+			resp = ValidateUserQRRsvpResponse{
+				Name:        "Bapak Ari",
+				PeopleCount: 2,
+				VIP:         true,
+				VVIP:        false,
+			}
+		}
+
+		if invitationCode == "69fee15d-2c45-48ea-982e-4ce6327298fc" {
+			resp = ValidateUserQRRsvpResponse{
+				Name:        "Bapak Lukman",
+				PeopleCount: 10,
+				VIP:         false,
+				VVIP:        true,
+			}
+		} else {
+			resp = ValidateUserQRRsvpResponse{
+				Name:        "Tamu Tidak Diundang",
+				PeopleCount: -99999,
+				VIP:         false,
+				VVIP:        false,
+			}
 		}
 	}
 
@@ -77,13 +101,15 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 
 Nama: %s
 Jumlah Konfirmasi (orang): 	%d
-VIP: %s`
+VIP: %s
+VVIP: %s`
 	for _, admin := range adminList {
 		handler.waClient.SendMessage(context.Background(), admin, &waProto.Message{
 			Conversation: proto.String(fmt.Sprintf(textForAdmin,
 				resp.Name,
 				resp.PeopleCount,
 				strconv.FormatBool(resp.VIP),
+				strconv.FormatBool(resp.VVIP),
 			)),
 		})
 	}

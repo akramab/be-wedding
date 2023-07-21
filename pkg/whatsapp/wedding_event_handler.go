@@ -426,8 +426,11 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 					}
 					wm.redisCache.Set(context.Background(), GetCurrentVideoList, strings.Join(videoList, ","), DefaultCacheTimeVideo)
 
+					userIDFromQR := qrDecodeResult.GetText()
+					userDataFromQR, _ := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), userIDFromQR)
+
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", qrDecodeResult.GetText())),
+						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", userDataFromQR.User.Name)),
 					})
 
 					currentAdmin1ListString, _ := wm.redisCache.Get(context.Background(), GetCurrentAdmin1).Result()

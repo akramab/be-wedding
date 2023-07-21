@@ -29,6 +29,7 @@ type UserHandler interface {
 
 type userHandler struct {
 	apiCfg          config.API
+	whatsAppCfg     whatsapp.Config
 	db              *sql.DB
 	userStore       store.User
 	invitationStore store.Invitation
@@ -36,9 +37,10 @@ type userHandler struct {
 	redisCache      redis.Client
 }
 
-func NewUserHandler(apiCfg config.API, db *sql.DB, userStore store.User, invitationStore store.Invitation, waClient whatsapp.Client, redisCache redis.Client) UserHandler {
+func NewUserHandler(apiCfg config.API, whatsAppCfg whatsapp.Config, db *sql.DB, userStore store.User, invitationStore store.Invitation, waClient whatsapp.Client, redisCache redis.Client) UserHandler {
 	return &userHandler{
 		apiCfg:          apiCfg,
+		whatsAppCfg:     whatsAppCfg,
 		db:              db,
 		userStore:       userStore,
 		invitationStore: invitationStore,

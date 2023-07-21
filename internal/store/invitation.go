@@ -38,6 +38,8 @@ type InvitationUserData struct {
 	QRImage             string
 	IsVideoReminderSent bool
 	IsDateReminderSent  bool
+	IsVIP               bool
+	IsVVIP              bool
 }
 
 type InvitationCompleteData struct {
