@@ -52,18 +52,20 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 	}
 
 	synchroUserDataList := []SyncronizeUserData{}
-	for _, line := range data {
-		synchroUserData := SyncronizeUserData{}
-		for columnNumber, field := range line {
-			if columnNumber == 0 {
-				synchroUserData.Name = field
+	for idx, line := range data {
+		if idx != 0 {
+			synchroUserData := SyncronizeUserData{}
+			for columnNumber, field := range line {
+				if columnNumber == 0 {
+					synchroUserData.Name = field
+				}
+	
+				if columnNumber == 2 {
+					synchroUserData.WaNumber = field
+				}
 			}
-
-			if columnNumber == 2 {
-				synchroUserData.WaNumber = field
-			}
+			synchroUserDataList = append(synchroUserDataList, synchroUserData)
 		}
-		synchroUserDataList = append(synchroUserDataList, synchroUserData)
 	}
 
 	for _, synchroUser := range synchroUserDataList {
