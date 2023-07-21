@@ -52,6 +52,7 @@ type UserRSVPData struct {
 	ID          string
 	UserID      string
 	PeopleCount int64
+	IsAttending bool
 	CreatedAt   time.Time
 }
 
@@ -69,4 +70,5 @@ type User interface {
 	InsertUserRSVP(ctx context.Context, userRSVP *UserRSVPData) error
 	UpdateRSVPByUserID(ctx context.Context, userRSVP *UserRSVPData) error
 	FindAllWhatsAppNumber(ctx context.Context) ([]string, error)
+	UpdateRSVPAttendanceByUserID(ctx context.Context, userRSVP *UserRSVPData) error
 }

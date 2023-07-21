@@ -2,6 +2,7 @@ package user
 
 import (
 	"be-wedding/internal/rest/response"
+	"be-wedding/internal/store"
 	"context"
 	"fmt"
 	"net/http"
@@ -59,13 +60,20 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 				VIP:         false,
 				VVIP:        false,
 			}
-		}
+		} else {
+			resp = ValidateUserQRRsvpResponse{
+				Name:        userData.User.Name,
+				PeopleCount: int(userData.User.PeopleCount),
+				VIP:         userData.User.IsVIP,
+				VVIP:        userData.User.IsVVIP,
+			}
 
-		resp = ValidateUserQRRsvpResponse{
-			Name:        userData.User.Name,
-			PeopleCount: int(userData.User.PeopleCount),
-			VIP:         userData.User.IsVIP,
-			VVIP:        userData.User.IsVVIP,
+			userRSVP := store.UserRSVPData{
+				UserID:      invitationCode,
+				IsAttending: true,
+			}
+
+			handler.userStore.UpdateRSVPAttendanceByUserID(ctx, &userRSVP)
 		}
 
 	} else {
