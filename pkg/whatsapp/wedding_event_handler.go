@@ -430,11 +430,22 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 					userDataFromQR, _ := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), userIDFromQR)
 
 					userRSVP := store.UserRSVPData{
-						ID:          userIDFromQR,
+						UserID:      userIDFromQR,
 						IsAttending: true,
 					}
-					log.Println("UPDATE ATTENDANCE")
-					wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
+		
+					err = wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
+					if err != nil {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran berhasil")),
+						})
+						return
+					} else {
+						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal %s", err.Error())),
+						})
+						return
+					}
 
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", userDataFromQR.User.Name)),
