@@ -441,8 +441,10 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 						})
 						return
 					} else {
+						log.Println("ERROR")
+							log.Println(err.Error())
 						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal %s", err.Error())),
+							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal")),
 						})
 						return
 					}
