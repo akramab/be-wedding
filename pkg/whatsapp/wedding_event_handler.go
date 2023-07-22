@@ -85,9 +85,10 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 				if v.RawMessage != nil && v.RawMessage.ExtendedTextMessage != nil && v.RawMessage.ExtendedTextMessage.Text != nil {
 					userMessage = strings.TrimSpace(*v.RawMessage.ExtendedTextMessage.Text)
 				} else {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String(fmt.Sprintf("Terjadi kesalahan teknis pada sistem. Pesan dari nomor yang anda gunakan saat ini tidak bisa diproses oleh sistem. Silakan coba kembali menggunakan nomor lain")),
-					})
+					// TURN OFF BECAUSE NOT WANTING TO CONFUSE USER
+					// wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					// 	Conversation: proto.String(fmt.Sprintf("Terjadi kesalahan teknis pada sistem. Pesan dari nomor yang anda gunakan saat ini tidak bisa diproses oleh sistem. Silakan coba kembali menggunakan nomor lain")),
+					// })
 					return
 				}
 			}
