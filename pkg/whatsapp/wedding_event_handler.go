@@ -521,10 +521,9 @@ VIP: %s`
 
 				if err := wm.userStore.Insert(context.Background(), newUserData); err != nil {
 					log.Println("error insert new user data: %w", err)
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String("Gagal mendaftarkan diri. Silakan hubungi Among Tamu terdekat untuk pencatatan kehadiran manual"),
-					})
-					return
+
+					invitationCompleteDataTemp, _ := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), "+"+strings.Split(userJID, "@")[0])
+					newUserData.ID = invitationCompleteDataTemp.User.ID
 				}
 
 				userData := &store.UserData{
