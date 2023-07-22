@@ -1116,32 +1116,32 @@ Afra - Akram 🌹`
 				})
 				return
 			case "Konfirmasi QR 2":
-				waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
-				if err != nil {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String("gagal wa number"),
-					})
-					return
-				}
-				for idx, waNumber := range waNumberList {
-					if idx > 23 {
-						invitationCompleteD, _ := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), waNumber)
-						userRSVPMessage := proto.String(fmt.Sprintf(`Berikut kami kirimkan kembali code QR anda`))
-						err = wm.SendMessage(context.Background(), invitationCompleteD.User.WhatsAppNumber, &waProto.Message{
-							Conversation: userRSVPMessage,
-						})
-						captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
-						err = wm.SendImageMessage(context.Background(), invitationCompleteD.User.WhatsAppNumber, invitationCompleteD.User.QRImage, captionImageMessage)
-						if err != nil {
-							wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-								Conversation: proto.String("gagal timeout"),
-							})
-							return
-						}
-						time.Sleep(time.Duration(5) * time.Second)
-					}
+				// waNumberList, err := wm.userStore.FindAllWhatsAppNumber(context.Background())
+				// if err != nil {
+				// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+				// 		Conversation: proto.String("gagal wa number"),
+				// 	})
+				// 	return
+				// }
+				// for idx, waNumber := range waNumberList {
+				// 	if idx > 23 {
+				// 		invitationCompleteD, _ := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), waNumber)
+				// 		userRSVPMessage := proto.String(fmt.Sprintf(`Berikut kami kirimkan kembali code QR anda`))
+				// 		err = wm.SendMessage(context.Background(), invitationCompleteD.User.WhatsAppNumber, &waProto.Message{
+				// 			Conversation: userRSVPMessage,
+				// 		})
+				// 		captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
+				// 		err = wm.SendImageMessage(context.Background(), invitationCompleteD.User.WhatsAppNumber, invitationCompleteD.User.QRImage, captionImageMessage)
+				// 		if err != nil {
+				// 			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+				// 				Conversation: proto.String("gagal timeout"),
+				// 			})
+				// 			return
+				// 		}
+				// 		time.Sleep(time.Duration(5) * time.Second)
+				// 	}
 
-				}
+				// }
 
 				return
 			case "Pernikahan Afra & Akram":
