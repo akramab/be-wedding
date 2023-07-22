@@ -1124,7 +1124,7 @@ Afra - Akram 🌹`
 					return
 				}
 				for idx, waNumber := range waNumberList {
-					if idx > 11 {
+					if idx > 23 {
 						invitationCompleteD, _ := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), waNumber)
 						userRSVPMessage := proto.String(fmt.Sprintf(`Berikut kami kirimkan kembali code QR anda`))
 						err = wm.SendMessage(context.Background(), invitationCompleteD.User.WhatsAppNumber, &waProto.Message{
@@ -1138,7 +1138,7 @@ Afra - Akram 🌹`
 							})
 							return
 						}
-						time.Sleep(time.Duration(3) * time.Second)
+						time.Sleep(time.Duration(5) * time.Second)
 					}
 
 				}
