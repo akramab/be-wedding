@@ -433,16 +433,11 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 						UserID:      userIDFromQR,
 						IsAttending: true,
 					}
-		
+
 					err = wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
 					if err != nil {
-						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran berhasil")),
-						})
-						return
-					} else {
 						log.Println("ERROR")
-							log.Println(err)
+						log.Println(err.Error())
 						wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 							Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal")),
 						})
@@ -739,26 +734,26 @@ Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationComp
 			}
 
 			switch userMessage {
-// 			case "1":
-// 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
-// 				replyMessage := `Anda akan mengubah jumlah kehadiran
+			// 			case "1":
+			// 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
+			// 				replyMessage := `Anda akan mengubah jumlah kehadiran
 
-// Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
-// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-// 					Conversation: proto.String(replyMessage),
-// 				})
-// 				return
-// 			case "2":
-// 				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
+			// Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
+			// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 					Conversation: proto.String(replyMessage),
+			// 				})
+			// 				return
+			// 			case "2":
+			// 				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
 
-// *Nama*			: %s
-// *Jumlah Orang*	: %d
+			// *Nama*			: %s
+			// *Jumlah Orang*	: %d
 
-// *Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
-// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-// 					Conversation: proto.String(replyMessage),
-// 				})
-// 				return
+			// *Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
+			// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 					Conversation: proto.String(replyMessage),
+			// 				})
+			// 				return
 			// case "3":
 			// 	replyMessage := `Berikut ini code QR anda`
 			// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
@@ -990,19 +985,19 @@ Afra - Akram 🌹`
 				return
 			}
 
-// 			replyMessage := `Pesan anda tidak dikenali
+			// 			replyMessage := `Pesan anda tidak dikenali
 
-// Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
-			
-// - Tekan *1* untuk *mengubah data jumlah konfirmasi kehadiran*
-// - Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
-// - Tekan *3* untuk *mendapatkan kembali code QR anda*
-// - Tekan *23* untuk *mengirim foto atau video ucapan*
-			
-// Terima kasih`
-// 			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-// 				Conversation: proto.String(replyMessage),
-// 			})
+			// Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
+
+			// - Tekan *1* untuk *mengubah data jumlah konfirmasi kehadiran*
+			// - Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
+			// - Tekan *3* untuk *mendapatkan kembali code QR anda*
+			// - Tekan *23* untuk *mengirim foto atau video ucapan*
+
+			// Terima kasih`
+			// 			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 				Conversation: proto.String(replyMessage),
+			// 			})
 			return
 		}
 	}
