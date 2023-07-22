@@ -575,7 +575,18 @@ VIP: %s`
 
 				userRSVP := store.UserRSVPData{
 					UserID:      newUserData.ID,
+					PeopleCount: 1, // still hardcoded
 					IsAttending: true,
+				}
+
+				err = wm.userStore.InsertUserRSVP(context.Background(), &userRSVP)
+				if err != nil {
+					log.Println("ERROR")
+					log.Println(err.Error())
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal. Silakan hubungi among tamu terdekat untuk pencatatan kehadiran manual")),
+					})
+					return
 				}
 
 				err = wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
@@ -589,7 +600,7 @@ VIP: %s`
 				}
 
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", newUserData.Name)),
+					Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", userData.Name)),
 				})
 				
 			case StateQRAT2:
