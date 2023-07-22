@@ -7,14 +7,9 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/fogleman/gg"
-	"github.com/google/uuid"
-	qrcode "github.com/skip2/go-qrcode"
 )
 
 type SynchronizeUserRequest struct {
@@ -24,6 +19,7 @@ type SynchronizeUserRequest struct {
 type SyncronizeUserData struct {
 	Name     string
 	WaNumber string
+	QRImage  string
 }
 
 func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +55,11 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 				if columnNumber == 0 {
 					synchroUserData.Name = field
 				}
-	
+
+				if columnNumber == 1 {
+					synchroUserData.QRImage = fmt.Sprintf("%s.png", field)
+				}
+
 				if columnNumber == 2 {
 					synchroUserData.WaNumber = field
 				}
@@ -69,12 +69,11 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 	}
 
 	for _, synchroUser := range synchroUserDataList {
-		qrImageName := fmt.Sprintf("qr-%s.png", uuid.NewString())
 		newUserData := &store.UserData{
 			InvitationID:   "synchronize-data",
 			InvitationType: "GROUP",
 			WhatsAppNumber: synchroUser.WaNumber,
-			QRImageName:    qrImageName,
+			QRImageName:    synchroUser.QRImage,
 		}
 
 		if err := handler.userStore.Insert(ctx, newUserData); err != nil {
@@ -94,37 +93,42 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
+		handler.userStore.InsertUserRSVP(ctx, &store.UserRSVPData{
+			UserID:      newUserData.ID,
+			PeopleCount: 1,
+		})
+
 		// CREATE QR
-		qrImageInitial := fmt.Sprintf("qr-%s.png", uuid.NewString())
-		initialFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageInitial)
-		finalFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageName)
-		err = qrcode.WriteColorFile(newUserData.ID, qrcode.Medium, 256, color.White, color.RGBA{110, 81, 59, 255}, initialFilePath)
-		if err != nil {
-			log.Println(err.Error())
-			response.Error(w, apierror.BadRequestError(err.Error()))
-			return
-		}
+		// qrImageInitial := fmt.Sprintf("qr-%s.png", uuid.NewString())
+		// initialFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageInitial)
+		// finalFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageName)
+		// err = qrcode.WriteColorFile(newUserData.ID, qrcode.Medium, 256, color.White, color.RGBA{110, 81, 59, 255}, initialFilePath)
+		// if err != nil {
+		// 	log.Println(err.Error())
+		// 	response.Error(w, apierror.BadRequestError(err.Error()))
+		// 	return
+		// }
 
-		const S = 256
-		im, err := gg.LoadImage(initialFilePath)
-		if err != nil {
-			log.Fatal(err)
-		}
+		// const S = 256
+		// im, err := gg.LoadImage(initialFilePath)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 
-		dc := gg.NewContext(S, S+20)
-		dc.SetRGB(1, 1, 1)
-		dc.Clear()
-		dc.SetRGB(0, 0, 0)
-		if err := dc.LoadFontFace("./static/fonts/Alice-Regular.ttf", 12); err != nil {
-			panic(err)
-		}
+		// dc := gg.NewContext(S, S+20)
+		// dc.SetRGB(1, 1, 1)
+		// dc.Clear()
+		// dc.SetRGB(0, 0, 0)
+		// if err := dc.LoadFontFace("./static/fonts/Alice-Regular.ttf", 12); err != nil {
+		// 	panic(err)
+		// }
 
-		dc.DrawImage(im, 0, 20)
-		dc.DrawStringAnchored("Tiket reservasi pernikahan Afra & Akram", S/2, 10, 0.5, 0.5)
-		dc.DrawStringAnchored(fmt.Sprintf("untuk %s", newUserData.Name), S/2, 20, 0.5, 0.5)
+		// dc.DrawImage(im, 0, 20)
+		// dc.DrawStringAnchored("Tiket reservasi pernikahan Afra & Akram", S/2, 10, 0.5, 0.5)
+		// dc.DrawStringAnchored(fmt.Sprintf("untuk %s", newUserData.Name), S/2, 20, 0.5, 0.5)
 
-		dc.Clip()
-		dc.SavePNG(finalFilePath)
+		// dc.Clip()
+		// dc.SavePNG(finalFilePath)
 	}
 
 	log.Println("DEBUG")
