@@ -466,20 +466,53 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 
 					currentAdmin1List := strings.Split(currentAdmin1ListString, ",")
 
-					textForAdmin := `Konfirmasi Kehadiran Berhasil!
+					textForAdminTamuBiasa := `Konfirmasi Kehadiran Berhasil!
 
 *Berikut data tamu undangan*
 
 Nama: %s
 Jumlah Konfirmasi (orang): 	%d
-VIP: %s`
+_Tamu Biasa_ `
+
+					textForAdminTamuVIP := `Konfirmasi Kehadiran Berhasil!
+
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+*Tamu VIP* `
+
+					textForAdminTamuVVIP := `Konfirmasi Kehadiran Berhasil!
+
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+*TAMU VVIP* `
 					for _, admin1 := range currentAdmin1List {
-						wm.SendMessage(context.Background(), admin1, &waProto.Message{
-							Conversation: proto.String(fmt.Sprintf(textForAdmin,
-								invitationCompleteData.User.Name,
-								invitationCompleteData.User.PeopleCount,
-								strconv.FormatBool(invitationCompleteData.User.IsVideoReminderSent))),
-						})
+						if invitationCompleteData.User.IsVVIP {
+							wm.SendMessage(context.Background(), admin1, &waProto.Message{
+								Conversation: proto.String(fmt.Sprintf(textForAdminTamuVVIP,
+									invitationCompleteData.User.Name,
+									invitationCompleteData.User.PeopleCount,
+								)),
+							})
+						} else if invitationCompleteData.User.IsVIP {
+							wm.SendMessage(context.Background(), admin1, &waProto.Message{
+								Conversation: proto.String(fmt.Sprintf(textForAdminTamuVIP,
+									invitationCompleteData.User.Name,
+									invitationCompleteData.User.PeopleCount,
+								)),
+							})
+						} else {
+							wm.SendMessage(context.Background(), admin1, &waProto.Message{
+								Conversation: proto.String(fmt.Sprintf(textForAdminTamuBiasa,
+									invitationCompleteData.User.Name,
+									invitationCompleteData.User.PeopleCount,
+								)),
+							})
+						}
+
 					}
 
 					return
