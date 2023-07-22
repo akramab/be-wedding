@@ -30,8 +30,27 @@ func (handler *userHandler) GetCurrentVideo(w http.ResponseWriter, r *http.Reque
 
 	if videoResultString == "" {
 		videoUrlList = []string{
+			"https://api.kramili.site/static/1.mp4",
+			"https://api.kramili.site/static/2.mp4",
 			"https://api.kramili.site/static/3.mp4",
+			"https://api.kramili.site/static/4.mp4",
 			"https://api.kramili.site/static/5.mp4",
+			"https://api.kramili.site/static/6.mp4",
+			"https://api.kramili.site/static/7.mp4",
+			"https://api.kramili.site/static/8.mp4",
+			"https://api.kramili.site/static/9.mp4",
+			"https://api.kramili.site/static/10.mp4",
+			"https://api.kramili.site/static/11.mp4",
+			"https://api.kramili.site/static/12.mp4",
+			"https://api.kramili.site/static/13.mp4",
+			"https://api.kramili.site/static/14.mp4",
+			"https://api.kramili.site/static/15.mp4",
+			"https://api.kramili.site/static/16.mp4",
+			"https://api.kramili.site/static/17.mp4",
+			"https://api.kramili.site/static/18.mp4",
+			"https://api.kramili.site/static/19.mp4",
+			"https://api.kramili.site/static/20.mp4",
+			"https://api.kramili.site/static/21.mp4",
 		}
 	} else {
 		videoUrlList = strings.Split(videoResultString, ",")
