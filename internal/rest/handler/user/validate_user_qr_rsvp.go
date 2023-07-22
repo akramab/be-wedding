@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -31,25 +30,15 @@ const (
 func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	invitationCode := chi.URLParam(r, "invitation_code")
-	atCode := r.URL.Query().Get("code")
 
 	var adminList []string
 	var resp ValidateUserQRRsvpResponse
-	if atCode == "1" {
-		adminListString, _ := handler.redisCache.Get(ctx, GetCurrentAdmin1).Result()
-		if adminListString == "" {
-			adminListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
-		}
-
-		adminList = strings.Split(adminListString, ",")
-	} else {
-		adminListString, _ := handler.redisCache.Get(ctx, GetCurrentAdmin2).Result()
-		if adminListString == "" {
-			adminListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
-		}
-
-		adminList = strings.Split(adminListString, ",")
+	adminListString, _ := handler.redisCache.Get(ctx, GetCurrentAdmin1).Result()
+	if adminListString == "" {
+		adminListString = strings.Join([]string{"+62812155249"}, StringSeparator) // random number
 	}
+
+	adminList = strings.Split(adminListString, ",")
 
 	if !handler.whatsAppCfg.DebugMode {
 		userData, err := handler.invitationStore.FindOneCompleteDataByUserID(ctx, invitationCode)
@@ -103,23 +92,52 @@ func (handler *userHandler) ValidateUserQRRsvp(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	textForAdmin := `Konfirmasi Kehadiran Berhasil!
+	textForAdminTamuBiasa := `Konfirmasi Kehadiran Berhasil!
 
 *Berikut data tamu undangan*
 
 Nama: %s
 Jumlah Konfirmasi (orang): 	%d
-VIP: %s
-VVIP: %s`
+_Tamu Biasa_ `
+
+	textForAdminTamuVIP := `Konfirmasi Kehadiran Berhasil!
+	
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+*Tamu VIP* `
+
+	textForAdminTamuVVIP := `Konfirmasi Kehadiran Berhasil!
+	
+*Berikut data tamu undangan*
+
+Nama: %s
+Jumlah Konfirmasi (orang): 	%d
+*TAMU VVIP* `
 	for _, admin := range adminList {
-		handler.waClient.SendMessage(context.Background(), admin, &waProto.Message{
-			Conversation: proto.String(fmt.Sprintf(textForAdmin,
-				resp.Name,
-				resp.PeopleCount,
-				strconv.FormatBool(resp.VIP),
-				strconv.FormatBool(resp.VVIP),
-			)),
-		})
+		if resp.VVIP {
+			handler.waClient.SendMessage(context.Background(), admin, &waProto.Message{
+				Conversation: proto.String(fmt.Sprintf(textForAdminTamuVVIP,
+					resp.Name,
+					resp.PeopleCount,
+				)),
+			})
+		} else if resp.VIP {
+			handler.waClient.SendMessage(context.Background(), admin, &waProto.Message{
+				Conversation: proto.String(fmt.Sprintf(textForAdminTamuVIP,
+					resp.Name,
+					resp.PeopleCount,
+				)),
+			})
+		} else {
+			handler.waClient.SendMessage(context.Background(), admin, &waProto.Message{
+				Conversation: proto.String(fmt.Sprintf(textForAdminTamuBiasa,
+					resp.Name,
+					resp.PeopleCount,
+				)),
+			})
+		}
 	}
 
 	response.Respond(w, http.StatusOK, resp)
