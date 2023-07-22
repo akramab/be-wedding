@@ -725,47 +725,47 @@ Ketik angka 1 jika anda ingin kembali mengubah jumlah kehadiran`, invitationComp
 			}
 
 			switch userMessage {
-			case "1":
-				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
-				replyMessage := `Anda akan mengubah jumlah kehadiran
+// 			case "1":
+// 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateChangeRSPV, DefaultCacheTime)
+// 				replyMessage := `Anda akan mengubah jumlah kehadiran
 
-Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(replyMessage),
-				})
-				return
-			case "2":
-				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
+// Ketik jumlah kehadiran baru anda (cukup tuliskan dalam *angka*)`
+// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+// 					Conversation: proto.String(replyMessage),
+// 				})
+// 				return
+// 			case "2":
+// 				replyMessage := fmt.Sprintf(`Berikut ini rekap rencana kehadiran yang tercatat:
 
-*Nama*			: %s
-*Jumlah Orang*	: %d
+// *Nama*			: %s
+// *Jumlah Orang*	: %d
 
-*Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(replyMessage),
-				})
-				return
-			case "3":
-				replyMessage := `Berikut ini code QR anda`
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String(replyMessage),
-				})
+// *Ketik angka 1 jika anda ingin mengubah jumlah kehadiran*`, invitationCompleteData.User.Name, invitationCompleteData.User.PeopleCount)
+// 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+// 					Conversation: proto.String(replyMessage),
+// 				})
+// 				return
+			// case "3":
+			// 	replyMessage := `Berikut ini code QR anda`
+			// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 		Conversation: proto.String(replyMessage),
+			// 	})
 
-				captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
-				err = wm.SendImageMessage(context.Background(), invitationCompleteData.User.WhatsAppNumber, invitationCompleteData.User.QRImage, captionImageMessage)
-				if err != nil {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String("Maaf terjadi kesalahan saat mengirimkan code QR. Silakan coba kembali"),
-					})
-					return
-				}
-				return
-			case "23":
-				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateUploadPhotoVideo, DefaultCacheTime)
-				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-					Conversation: proto.String("Silakan kirimkan foto atau video ucapan anda"),
-				})
-				return
+			// 	captionImageMessage := `Tunjukkan code QR saat hendak memasuki venue pada hari H.`
+			// 	err = wm.SendImageMessage(context.Background(), invitationCompleteData.User.WhatsAppNumber, invitationCompleteData.User.QRImage, captionImageMessage)
+			// 	if err != nil {
+			// 		wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 			Conversation: proto.String("Maaf terjadi kesalahan saat mengirimkan code QR. Silakan coba kembali"),
+			// 		})
+			// 		return
+			// 	}
+			// 	return
+			// case "23":
+			// 	wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateUploadPhotoVideo, DefaultCacheTime)
+			// 	wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+			// 		Conversation: proto.String("Silakan kirimkan foto atau video ucapan anda"),
+			// 	})
+			// 	return
 			case "1819":
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateSendQRCode, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
@@ -976,19 +976,19 @@ Afra - Akram 🌹`
 				return
 			}
 
-			replyMessage := `Pesan anda tidak dikenali
+// 			replyMessage := `Pesan anda tidak dikenali
 
-Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
+// Anda dapat berinteraksi dengan akun WhatsApp ini dengan mengetikkan daftar pesan di bawah ini:
 			
-- Tekan *1* untuk *mengubah data jumlah konfirmasi kehadiran*
-- Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
-- Tekan *3* untuk *mendapatkan kembali code QR anda*
-- Tekan *23* untuk *mengirim foto atau video ucapan*
+// - Tekan *1* untuk *mengubah data jumlah konfirmasi kehadiran*
+// - Tekan *2* untuk *melihat data konfirmasi kehadiran anda*
+// - Tekan *3* untuk *mendapatkan kembali code QR anda*
+// - Tekan *23* untuk *mengirim foto atau video ucapan*
 			
-Terima kasih`
-			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-				Conversation: proto.String(replyMessage),
-			})
+// Terima kasih`
+// 			wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+// 				Conversation: proto.String(replyMessage),
+// 			})
 			return
 		}
 	}
