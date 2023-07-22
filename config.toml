@@ -37,7 +37,7 @@ redirect_uri = "http://localhost:3000/auth/google/callback"
 auth = false
 
 [whatsapp]
-enable_notification = false
+enable_notification = true
 broadcast_mode = false
 debug_mode = false
 auto_reply = false
