@@ -58,6 +58,7 @@ type UserRSVPData struct {
 
 type User interface {
 	Insert(ctx context.Context, user *UserData) error
+	InsertWithID(ctx context.Context, user *UserData) error
 	Update(ctx context.Context, user *UserData) error
 	InsertComment(ctx context.Context, userComment *UserCommentData) error
 	UpdateComment(ctx context.Context, userComment *UserCommentData) error

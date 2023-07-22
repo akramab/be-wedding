@@ -77,6 +77,48 @@ func (s *User) Insert(ctx context.Context, user *store.UserData) error {
 
 }
 
+func (s *User) InsertWithID(ctx context.Context, user *store.UserData) error {
+	insertStmt, err := s.db.PrepareContext(ctx, userInsertQuery)
+	if err != nil {
+		return err
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	createdAt := time.Now().UTC()
+	_, err = tx.StmtContext(ctx, insertStmt).ExecContext(ctx,
+		user.ID, user.InvitationID, user.WhatsAppNumber, store.UserStatusNewlyCreated,
+		user.QRImageName, createdAt,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert: %w", err)
+	}
+
+	// Update Invitation Status
+	if user.InvitationType == store.InvitationTypeSingle {
+
+		invitationUpdatedAt := time.Now().UTC()
+		updateInvitationStatusStmt, err := s.db.PrepareContext(ctx, invitationStatusUpdateQuery)
+		_, err = tx.StmtContext(ctx, updateInvitationStatusStmt).ExecContext(ctx,
+			user.InvitationID, store.InvitationStatusUsed, invitationUpdatedAt,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update invitation status: %w", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
+	}
+	user.CreatedAt = createdAt
+
+	return nil
+
+}
+
 const userUpdateQuery = `UPDATE users
 	SET name = $2, status = $3, updated_at = $4
 	WHERE id = $1

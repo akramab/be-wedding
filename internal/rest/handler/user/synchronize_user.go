@@ -17,6 +17,7 @@ type SynchronizeUserRequest struct {
 }
 
 type SyncronizeUserData struct {
+	ID       string
 	Name     string
 	WaNumber string
 	QRImage  string
@@ -63,6 +64,9 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 				if columnNumber == 2 {
 					synchroUserData.WaNumber = field
 				}
+				if columnNumber == 3 {
+					synchroUserData.ID = field
+				}
 			}
 			synchroUserDataList = append(synchroUserDataList, synchroUserData)
 		}
@@ -70,13 +74,14 @@ func (handler *userHandler) SynchronizeUser(w http.ResponseWriter, r *http.Reque
 
 	for _, synchroUser := range synchroUserDataList {
 		newUserData := &store.UserData{
+			ID:             synchroUser.ID,
 			InvitationID:   "synchronize-data",
 			InvitationType: "GROUP",
 			WhatsAppNumber: synchroUser.WaNumber,
 			QRImageName:    synchroUser.QRImage,
 		}
 
-		if err := handler.userStore.Insert(ctx, newUserData); err != nil {
+		if err := handler.userStore.InsertWithID(ctx, newUserData); err != nil {
 			log.Println("error insert new user data: %w", err)
 			response.Error(w, apierror.BadRequestError(fmt.Sprintf("phone number: %s already exists!", newUserData.WhatsAppNumber)))
 			return
