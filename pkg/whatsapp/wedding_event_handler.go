@@ -53,17 +53,17 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 			fmt.Printf("USER JID: %s \n", userJID)
 			invitationCompleteData, err := wm.invitationStore.FindOneCompleteDataByWANumber(context.Background(), "+"+strings.Split(userJID, "@")[0])
 			if err != nil {
-				if !wm.Config.DebugMode {
-					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
-						Conversation: proto.String(fmt.Sprintf("Maaf, nomor anda belum terdaftar. Silahkan registrasi melalui undangan yang telah dikirimkan")),
-					})
-					return
-				} else if wm.Config.RSVPCheck {
+				if wm.Config.RSVPCheck {
 					invitationCompleteData = &store.InvitationCompleteData{
 						User: store.InvitationUserData{
 							ID: userJID,
 						},
 					}
+				} else if !wm.Config.DebugMode {
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Maaf, nomor anda belum terdaftar. Silahkan registrasi melalui undangan yang telah dikirimkan")),
+					})
+					return
 				} else {
 					invitationCompleteData = &store.InvitationCompleteData{
 						Invitation: store.InvitationData{
@@ -602,7 +602,7 @@ VIP: %s`
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", userData.Name)),
 				})
-				
+
 			case StateQRAT2:
 				if v.Message.GetImageMessage() != nil {
 					fmt.Println("IMAGE EXISTS")
