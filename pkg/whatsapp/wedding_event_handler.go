@@ -429,6 +429,12 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 					userIDFromQR := qrDecodeResult.GetText()
 					userDataFromQR, _ := wm.invitationStore.FindOneCompleteDataByUserID(context.Background(), userIDFromQR)
 
+					userRSVP := store.UserRSVPData{
+						ID:          userIDFromQR,
+						IsAttending: true,
+					}
+					wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
+
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 						Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", userDataFromQR.User.Name)),
 					})
@@ -956,7 +962,7 @@ Afra - Akram 🌹`
 				})
 				return
 
-			case "Konfirmasi QR 1":
+			case "Registrasi Pernikahan Afra & Akram": // THIS IS THE ONE THAT WILL BE USED
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateQRAT1, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String("Silakan kirimkan QR code anda"),
