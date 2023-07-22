@@ -41,6 +41,7 @@ enable_notification = true
 broadcast_mode = false
 debug_mode = false
 auto_reply = true
+rsvp_check = true
 
 [redis]
 enable_cache = true

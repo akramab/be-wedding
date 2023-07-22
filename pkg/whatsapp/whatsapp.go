@@ -23,6 +23,7 @@ type Config struct {
 	BroadcastMode      bool `toml:"broadcast_mode"`
 	DebugMode          bool `toml:"debug_mode"`
 	AutoReply          bool `toml:"auto_reply"`
+	RSVPCheck          bool `toml:"rsvp_check"`
 }
 
 type Client interface {

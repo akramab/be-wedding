@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"image"
+	"image/color"
 	"io/fs"
 	"log"
 	"os"
@@ -12,9 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fogleman/gg"
 	"github.com/google/uuid"
 	"github.com/makiuchi-d/gozxing"
 	gozqrcode "github.com/makiuchi-d/gozxing/qrcode"
+	"github.com/skip2/go-qrcode"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/types/events"
 	"google.golang.org/protobuf/proto"
@@ -26,6 +29,7 @@ const (
 	StateChangeRSPV       = "CHANGE_RSVP"
 	StateQRAT1            = "QR_AT1"
 	StateQRAT2            = "QR_AT2"
+	StateRegisterNoQR     = "REGISTER_NO_QR"
 
 	DefaultCacheTime      = time.Duration(1) * time.Minute
 	DefaultCacheTimeVideo = time.Duration(10) * time.Minute
@@ -54,6 +58,12 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 						Conversation: proto.String(fmt.Sprintf("Maaf, nomor anda belum terdaftar. Silahkan registrasi melalui undangan yang telah dikirimkan")),
 					})
 					return
+				} else if wm.Config.RSVPCheck {
+					invitationCompleteData = &store.InvitationCompleteData{
+						User: store.InvitationUserData{
+							ID: userJID,
+						},
+					}
 				} else {
 					invitationCompleteData = &store.InvitationCompleteData{
 						Invitation: store.InvitationData{
@@ -499,6 +509,90 @@ VIP: %s`
 					})
 					return
 				}
+			case StateRegisterNoQR:
+				senderWaNumber := "+" + strings.Split(v.Info.Sender.ToNonAD().String(), "@")[0]
+				qrImageName := fmt.Sprintf("qr-%s.png", uuid.NewString())
+				newUserData := &store.UserData{
+					InvitationID:   "noqrattendee",
+					InvitationType: "GROUP",
+					WhatsAppNumber: senderWaNumber,
+					QRImageName:    qrImageName,
+				}
+
+				if err := wm.userStore.Insert(context.Background(), newUserData); err != nil {
+					log.Println("error insert new user data: %w", err)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Gagal mendaftarkan diri. Silakan hubungi Among Tamu terdekat untuk pencatatan kehadiran manual"),
+					})
+					return
+				}
+
+				userData := &store.UserData{
+					ID:   newUserData.ID,
+					Name: userMessage,
+				}
+
+				if err := wm.userStore.Update(context.Background(), userData); err != nil {
+					log.Println("error update new user data: %w", err)
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Gagal mendaftarkan diri. Silakan hubungi Among Tamu terdekat untuk pencatatan kehadiran manual"),
+					})
+					return
+				}
+
+				// CREATE QR
+				qrImageInitial := fmt.Sprintf("qr-%s.png", uuid.NewString())
+				initialFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageInitial)
+				finalFilePath := fmt.Sprintf("./static/qr-codes/%s", qrImageName)
+				err = qrcode.WriteColorFile(newUserData.ID, qrcode.Medium, 256, color.White, color.RGBA{110, 81, 59, 255}, initialFilePath)
+				if err != nil {
+					log.Println(err.Error())
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String("Gagal mendaftarkan diri. Silakan hubungi Among Tamu terdekat untuk pencatatan kehadiran manual"),
+					})
+					return
+				}
+
+				const S = 256
+				im, err := gg.LoadImage(initialFilePath)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				dc := gg.NewContext(S, S+20)
+				dc.SetRGB(1, 1, 1)
+				dc.Clear()
+				dc.SetRGB(0, 0, 0)
+				if err := dc.LoadFontFace("./static/fonts/Alice-Regular.ttf", 12); err != nil {
+					panic(err)
+				}
+
+				dc.DrawImage(im, 0, 20)
+				dc.DrawStringAnchored("Tiket reservasi pernikahan Afra & Akram", S/2, 10, 0.5, 0.5)
+				dc.DrawStringAnchored(fmt.Sprintf("untuk %s", newUserData.Name), S/2, 20, 0.5, 0.5)
+
+				dc.Clip()
+				dc.SavePNG(finalFilePath)
+
+				userRSVP := store.UserRSVPData{
+					UserID:      newUserData.ID,
+					IsAttending: true,
+				}
+
+				err = wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
+				if err != nil {
+					log.Println("ERROR")
+					log.Println(err.Error())
+					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+						Conversation: proto.String(fmt.Sprintf("Pencatatan kehadiran gagal. Silakan hubungi among tamu terdekat untuk pencatatan kehadiran manual")),
+					})
+					return
+				}
+
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String(fmt.Sprintf("Selamat datang, %s", newUserData.Name)),
+				})
+				
 			case StateQRAT2:
 				if v.Message.GetImageMessage() != nil {
 					fmt.Println("IMAGE EXISTS")
@@ -982,6 +1076,12 @@ Afra - Akram 🌹`
 				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateQRAT2, DefaultCacheTime)
 				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
 					Conversation: proto.String("Silakan kirimkan QR code anda"),
+				})
+				return
+			case "Pernikahan Afra & Akram":
+				wm.redisCache.Set(context.Background(), invitationCompleteData.User.ID, StateRegisterNoQR, DefaultCacheTime)
+				wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
+					Conversation: proto.String("Silakan masukkan nama anda"),
 				})
 				return
 			}
