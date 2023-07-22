@@ -433,6 +433,7 @@ func (wm *whatsMeow) eventHandler(evt interface{}) {
 						ID:          userIDFromQR,
 						IsAttending: true,
 					}
+					log.Println("UPDATE ATTENDANCE")
 					wm.userStore.UpdateRSVPAttendanceByUserID(context.Background(), &userRSVP)
 
 					wm.Client.SendMessage(context.Background(), v.Info.Sender.ToNonAD(), &waProto.Message{
