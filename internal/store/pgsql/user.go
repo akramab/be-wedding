@@ -599,6 +599,7 @@ func (s *User) UpdateRSVPByUserID(ctx context.Context, userRSVP *store.UserRSVPD
 
 const userFindAllWhatsAppNumberQuery = `SELECT u.wa_number 
 FROM users u
+ORDER by u.created_at asc
 `
 
 func (s *User) FindAllWhatsAppNumber(ctx context.Context) ([]string, error) {
